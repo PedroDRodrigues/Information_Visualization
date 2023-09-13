@@ -263,8 +263,8 @@ function createBoxPlot(data) {
   //var median = d3.quantile(data_sorted, .5)
   var q3 = d3.quantile(data_sorted, .75)
   var interQuantileRange = q3 - q1
-  var min = q1 - 1.5 * interQuantileRange
-  var max = q1 + 1.5 * interQuantileRange
+  var min = d3.min(allBudgets)
+  var max = d3.max(allBudgets)
 
   // Compute median
   if (data_sorted.length % 2 == 0) {
@@ -285,13 +285,17 @@ function createBoxPlot(data) {
     .domain([0, d3.max(allBudgets)])
     .range([height, 0]);
 
-  // Create a color scale for the boxes based on the budget data
-  const colorScale = d3
-    .scaleSequential(d3.interpolateBlues)
-    .domain([d3.min(allBudgets), d3.max(allBudgets)]);
-
   const box_center = 200;
   const box_width = 100;
+
+  // Create the main vertical line
+  svg
+  .append("line")
+    .attr("x1", box_center + box_width/2)
+    .attr("x2", box_center + box_width/2)
+    .attr("y1", yScale(min) )
+    .attr("y2", yScale(max) )
+    .attr("stroke", "black")
   
   // Create the box plot elements
   svg
@@ -305,29 +309,27 @@ function createBoxPlot(data) {
     .attr("width", box_width)
     .attr("height", (yScale(q1) - yScale(q3)))
     .attr("stroke", "black")
-    .style("fill", (d) => colorScale(d3.median(d)))
-    .style("fill-opacity", 0.5)
+    .style("fill", "steelblue")
     .on("mouseover", handleMouseOver)
     .on("mouseout", handleMouseOut)
     .append("title")
     .text((d) => d.title);
 
-  svg 
+
+
+    svg
     .selectAll(".median")
-    .data([median])
+    .data([min, median, max])
     .enter()
     .append("line")
-    .attr("class", "median")
     .attr("x1", box_center)
     .attr("y1", (d) => yScale(d))
-    .attr("x2", 30)
+    .attr("x2", box_center + box_width)
     .attr("y2", (d) => yScale(d))
     .attr("stroke", "black")
     .attr("stroke-width", 1)
     .on("mouseover", handleMouseOver)
-    .on("mouseout", handleMouseOut)
-    .append("title")
-    .text((d) => d.title);
+    .on("mouseout", handleMouseOut);
 
   // Append x and y axes to the line chart
   svg
