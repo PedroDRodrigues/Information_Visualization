@@ -282,7 +282,9 @@ function createBoxPlot(data) {
     .scaleSequential(d3.interpolateBlues)
     .domain([d3.min(allBudgets), d3.max(allBudgets)]);
 
-
+  const box_center = 200;
+  const box_width = 100;
+  
   // Create the box plot elements
   svg
     .selectAll(".box")
@@ -290,10 +292,10 @@ function createBoxPlot(data) {
     .enter()
     .append("rect")
     .attr("class", "box")
-    .attr("x", 200)
-    .attr("y", (d) => yScale(q3))
-    .attr("width", 100)
-    .attr("height", (d) => (yScale(q1) - yScale(q3)))
+    .attr("x", box_center)
+    .attr("y", yScale(q3))
+    .attr("width", box_width)
+    .attr("height", (yScale(q1) - yScale(q3)))
     .attr("stroke", "black")
     .style("fill", (d) => colorScale(d3.median(d)))
     .style("fill-opacity", 0.5)
