@@ -260,11 +260,19 @@ function createBoxPlot(data) {
   // Compute summary statistics used for the box:
   var data_sorted = allBudgets.sort(d3.ascending)
   var q1 = d3.quantile(data_sorted, .25)
-  var median = d3.quantile(data_sorted, .5)
+  //var median = d3.quantile(data_sorted, .5)
   var q3 = d3.quantile(data_sorted, .75)
   var interQuantileRange = q3 - q1
   var min = q1 - 1.5 * interQuantileRange
   var max = q1 + 1.5 * interQuantileRange
+
+  // Compute median
+  if (data_sorted.length % 2 == 0) {
+    var median = (data_sorted[data_sorted.length / 2] + data_sorted[data_sorted.length / 2 - 1]) / 2
+  }
+  else {
+    var median = data_sorted[(data_sorted.length - 1) / 2]
+  }
 
   // Create x and y scales for the line chart
   const xScale = d3
@@ -299,6 +307,23 @@ function createBoxPlot(data) {
     .attr("stroke", "black")
     .style("fill", (d) => colorScale(d3.median(d)))
     .style("fill-opacity", 0.5)
+    .on("mouseover", handleMouseOver)
+    .on("mouseout", handleMouseOut)
+    .append("title")
+    .text((d) => d.title);
+
+  svg 
+    .selectAll(".median")
+    .data([median])
+    .enter()
+    .append("line")
+    .attr("class", "median")
+    .attr("x1", box_center)
+    .attr("y1", (d) => yScale(d))
+    .attr("x2", 30)
+    .attr("y2", (d) => yScale(d))
+    .attr("stroke", "black")
+    .attr("stroke-width", 1)
     .on("mouseover", handleMouseOver)
     .on("mouseout", handleMouseOut)
     .append("title")
