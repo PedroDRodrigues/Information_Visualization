@@ -37,18 +37,21 @@ function updateIdioms(data) {
       updateBarChart(globalData.filter((item) => item.oscar_year <= 2010));
       updateScatterPlot(globalData.filter((item) => item.oscar_year <= 2010));
       updateLineChart(globalData.filter((item) => item.oscar_year <= 2010));
+      updateBoxPlot(globalData.filter((item) => item.oscar_year <= 2010));
       break;
     case "new":
       // If "new" is selected, update the visualizations with data after 2010.
       updateBarChart(globalData.filter((item) => item.oscar_year > 2010));
       updateScatterPlot(globalData.filter((item) => item.oscar_year > 2010));
       updateLineChart(globalData.filter((item) => item.oscar_year > 2010));
+      updateBoxPlot(globalData.filter((item) => item.oscar_year > 2010));
       break;
     default:
       // If no specific data type is selected, update the visualizations with all the data.
       updateBarChart(globalData);
       updateScatterPlot(globalData);
       updateLineChart(globalData);
+      updateBoxPlot(globalData);
       break;
   }
 }

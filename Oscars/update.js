@@ -226,15 +226,18 @@ function updateBoxPlot(data) {
   // Select the SVG element of the boxplot
   const svg = d3.select("#boxPlot").select("svg").select("g");
 
+  // Combine all budget values into a single array
+  const allBudgets = data.map((d) => d.budget);
+
   // Create x and y scales for the chart
   const xScale = d3
     .scaleBand()
-    .domain(data.map((d) => d.oscar_year))
-    .range([0, width])
+    .range([width, 0])
     .padding(1);
+
   const yScale = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d.budget)])
+    .domain([0, d3.max(allBudgets)])
     .range([height, 0]);
 
   // Update the y-axis with the new data points, formatting the labels for budget in millions
@@ -251,34 +254,52 @@ function updateBoxPlot(data) {
 
   // Select all existing boxes and bind the data to them
   const boxes = svg.selectAll(".box").data(data, (d) => d.title);
+  const box_center = 200;
+  const box_width = 100;
+
+  // Compute summary statistics used for the box:
+  var data_sorted = allBudgets.sort(d3.ascending)
+  var q1 = d3.quantile(data_sorted, .25)
+  //var median = d3.quantile(data_sorted, .5)
+  var q3 = d3.quantile(data_sorted, .75)
+  var interQuantileRange = q3 - q1
+  var min = d3.min(allBudgets)
+  var max = d3.max(allBudgets)
+
+  // Compute median
+  if (data_sorted.length % 2 == 0) {
+    var median = (data_sorted[data_sorted.length / 2] + data_sorted[data_sorted.length / 2 - 1]) / 2
+  }
+  else {
+    var median = data_sorted[(data_sorted.length - 1) / 2]
+  }
 
   // Update existing boxes with transitions for position, width, height, and color
   boxes
     .transition()
     .duration(1000)
-    .attr("x", (d) => xScale(d.oscar_year))
-    .attr("y", (d) => yScale(d.budget))
-    .attr("width", xScale.bandwidth())
-    .attr("height", (d) => height - yScale(d.budget))
+    .attr("x", box_center)
+    .attr("y", yScale(q3))
+    .attr("width", box_width)
+    .attr("height", (yScale(q1) - yScale(q3)))
     .attr("fill", "steelblue");
-
-  // Add new boxes for any new data points and transition them to their correct position, width, height, and color
+    
+  // Add new box for any new data points and transition them to their correct position, width, height, and color
   boxes
     .enter()
     .append("rect")
     .attr("class", "box data")
-    .attr("x", (d) => xScale(d.oscar_year))
-    .attr("y", height)
-    .attr("width", xScale.bandwidth())
+    .attr("x", box_center)
+    .attr("y", yScale(q3))
+    .attr("width", box_width)
     .attr("height", 0)
     .attr("fill", "steelblue")
     .attr("stroke", "black")
     .transition()
     .duration(500)
-    .attr("y", (d) => yScale(d.budget))
-    .attr("height", (d) => height - yScale(d.budget));
+    .attr("height", (yScale(q1) - yScale(q3)));
 
-  // Remove any boxes that are no longer in the updated data
+  // Remove the box that are no longer in the updated data
   boxes.exit().transition().duration(500).attr("height", 0).remove();
 
   // Add tooltips to all boxes with the movie title as the content
