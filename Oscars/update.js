@@ -229,16 +229,82 @@ function updateBoxPlot(data) {
   // Combine all budget values into a single array
   const allBudgets = data.map((d) => d.budget);
 
-  // Create x and y scales for the chart
-  const xScale = d3
-    .scaleBand()
-    .range([width, 0])
-    .padding(1);
-
+  // Create y scales for the chart
   const yScale = d3
     .scaleLinear()
     .domain([0, d3.max(allBudgets)])
     .range([height, 0]);
+
+  const box_center = 200;
+  const box_width = 100;
+
+  // Compute summary statistics used for the box:
+  var data_sorted = allBudgets.sort(d3.ascending)
+  var q1 = d3.quantile(data_sorted, .25)
+  var median = d3.quantile(data_sorted, .5)
+  var q3 = d3.quantile(data_sorted, .75)
+  var min = d3.min(allBudgets)
+  var max = d3.max(allBudgets)
+
+  // Update the line with the new data points
+  //svg.select(".line").transition().duration(500).attr("y1", yScale(min)).attr("y2", yScale(max));
+  
+  // Select all existing boxes and bind the data to them
+  const boxes = svg.selectAll(".box").data([allBudgets]);
+
+  // Update existing boxes with transitions for position, width, height, and color
+  boxes
+    .transition()
+    .duration(1000)
+    .attr("y", yScale(q3))
+    .attr("height", (yScale(q1) - yScale(q3)));
+    
+  // Add new box for any new data points and transition them to their correct position, width, height, and color
+  boxes
+    .enter()
+    .append("rect")
+    .attr("class", "box data")
+    .attr("x", box_center)
+    .attr("y", yScale(q3))
+    .attr("width", box_width)
+    .attr("height", 0)
+    .attr("fill", "steelblue")
+    .attr("stroke", "black")
+    .attr("stroke-width", 2.5)
+    .transition()
+    .duration(500)
+    .attr("height", (yScale(q1) - yScale(q3)));
+
+  // Remove the box that are no longer in the updated data
+  boxes.exit().transition().duration(500).attr("height", 0).remove();
+
+  // Select all existing circles and bind the data to them
+  const medianLines = svg.selectAll(".median").data([min, median, max]);
+
+  // Update existing circles with transitions for position
+  medianLines
+    .transition()
+    .duration(500)
+    .attr("y1", (d) => yScale(d))
+    .attr("y2", (d) => yScale(d));
+
+  // Add new circles for any new data points and transition them to their correct position
+  medianLines
+    .enter()
+    .append("line")
+    .attr("x1", box_center)
+    .attr("y1", 0)
+    .attr("x2", box_center + box_width)
+    .attr("y2", 0)
+    .attr("stroke", "black")
+    .attr("stroke-width", 5)
+    .transition()
+    .duration(500)
+    .attr("y1", (d) => yScale(d))
+    .attr("y2", (d) => yScale(d));
+
+  // Remove any circles that are no longer in the updated data
+  medianLines.exit().transition().duration(500).attr("y1", 0).attr("y2", 0).remove();
 
   // Update the y-axis with the new data points, formatting the labels for budget in millions
   svg
@@ -252,65 +318,6 @@ function updateBoxPlot(data) {
         .tickSizeOuter(0)
     );
 
-  // Select all existing boxes and bind the data to them
-  const boxes = svg.selectAll(".box").data(data, (d) => d.title);
-  const box_center = 200;
-  const box_width = 100;
-
-  // Compute summary statistics used for the box:
-  var data_sorted = allBudgets.sort(d3.ascending)
-  var q1 = d3.quantile(data_sorted, .25)
-  var q3 = d3.quantile(data_sorted, .75)
-  var interQuantileRange = q3 - q1
-  var min = d3.min(allBudgets)
-  var max = d3.max(allBudgets)
-
-  // Compute median
-  if (data_sorted.length % 2 == 0) {
-    var median_value = (data_sorted[data_sorted.length / 2] + data_sorted[data_sorted.length / 2 - 1]) / 2
-  }
-  else {
-    var median_value = data_sorted[(data_sorted.length - 1) / 2]
-  }
-
-  // Create a line generator to draw the main line based on the data points
-  const line = d3
-    .line()
-    .x((d) => xScale(box_center + box_width/2))
-    .y((d) => yScale(d.budget));
-
-  // Update the line with the new data points
-  svg.select(".line").datum(data).transition().duration(500).attr("d", line);
-
-  // Update existing boxes with transitions for position, width, height, and color
-  boxes
-    .transition()
-    .duration(1000)
-    .attr("x", box_center)
-    .attr("y", yScale(q3))
-    .attr("width", box_width)
-    .attr("height", (yScale(q1) - yScale(q3)))
-    .attr("fill", "steelblue");
-    
-  // Add new box for any new data points and transition them to their correct position, width, height, and color
-  boxes
-    .enter()
-    .append("rect")
-    .attr("class", "box data")
-    .attr("x", box_center)
-    .attr("y", yScale(q3))
-    .attr("width", box_width)
-    .attr("height", 0)
-    .attr("fill", "steelblue")
-    .attr("stroke", "black")
-    .transition()
-    .duration(500)
-    .attr("height", (yScale(q1) - yScale(q3)));
-
-  // Remove the box that are no longer in the updated data
-  boxes.exit().transition().duration(500).attr("height", 0).remove();
-
-
   // Add tooltips to all boxes with the movie title as the content
   svg
     .selectAll(".box")
@@ -318,4 +325,11 @@ function updateBoxPlot(data) {
     .on("mouseout", handleMouseOut)
     .append("title")
     .text((d) => d.title);
+
+  svg
+    .selectAll(".median")
+    .on("mouseover", handleMouseOver)
+    .on("mouseout", handleMouseOut)
+    .append("title")
+    .text((d) => d3.format(".1f")(d / 1000000) + "M");
 }
