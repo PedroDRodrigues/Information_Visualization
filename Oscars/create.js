@@ -257,10 +257,18 @@ function createBoxPlot(data) {
   // Combine all budget values into a single array
   const allBudgets = data.map((d) => d.budget);
 
+  // Compute summary statistics used for the box:
+  var data_sorted = allBudgets.sort(d3.ascending)
+  var q1 = d3.quantile(data_sorted, .25)
+  var median = d3.quantile(data_sorted, .5)
+  var q3 = d3.quantile(data_sorted, .75)
+  var interQuantileRange = q3 - q1
+  var min = q1 - 1.5 * interQuantileRange
+  var max = q1 + 1.5 * interQuantileRange
+
   // Create x and y scales for the line chart
   const xScale = d3
   .scaleBand()
-  .domain(["Budget"])
   .range([width, 0])
   .padding(1);
   
@@ -282,10 +290,10 @@ function createBoxPlot(data) {
     .enter()
     .append("rect")
     .attr("class", "box")
-    .attr("x", (d) => xScale("Budget"))
-    .attr("y", (d) => yScale(d3.quantile(d, 0.25)))
+    .attr("x", 200)
+    .attr("y", (d) => yScale(q3))
     .attr("width", 100)
-    .attr("height", (d) => 100)
+    .attr("height", (d) => (yScale(q1) - yScale(q3)))
     .attr("stroke", "black")
     .style("fill", (d) => colorScale(d3.median(d)))
     .style("fill-opacity", 0.5)
@@ -311,15 +319,7 @@ function createBoxPlot(data) {
         .tickSizeOuter(0)
     );
 
-  // Append x and y axis labels
-  svg
-    .append("text")
-    .attr("class", "x-axis-label")
-    .attr("x", width / 2)
-    .attr("y", height + margin.top + 30)
-    .style("text-anchor", "middle")
-    .text("Oscar Year");
-  
+  // Append y axis label
   svg
     .append("text")
     .attr("class", "y-axis-label")
