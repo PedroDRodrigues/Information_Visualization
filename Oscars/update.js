@@ -255,7 +255,7 @@ function updateBoxPlot(data) {
   // Update existing boxes with transitions for position, width, height, and color
   boxes
     .transition()
-    .duration(1000)
+    .duration(500)
     .attr("y", yScale(q3))
     .attr("height", (yScale(q1) - yScale(q3)));
     
