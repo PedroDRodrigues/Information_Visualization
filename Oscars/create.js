@@ -260,26 +260,12 @@ function createBoxPlot(data) {
   // Compute summary statistics used for the box:
   var data_sorted = allBudgets.sort(d3.ascending)
   var q1 = d3.quantile(data_sorted, .25)
-  //var median = d3.quantile(data_sorted, .5)
+  var median = d3.quantile(data_sorted, .5)
   var q3 = d3.quantile(data_sorted, .75)
-  var interQuantileRange = q3 - q1
   var min = d3.min(allBudgets)
   var max = d3.max(allBudgets)
 
-  // Compute median
-  if (data_sorted.length % 2 == 0) {
-    var median = (data_sorted[data_sorted.length / 2] + data_sorted[data_sorted.length / 2 - 1]) / 2
-  }
-  else {
-    var median = data_sorted[(data_sorted.length - 1) / 2]
-  }
-
-  // Create x and y scales for the line chart
-  const xScale = d3
-  .scaleBand()
-  .range([width, 0])
-  .padding(1);
-  
+  // Create y scales for the line chart
   const yScale = d3
     .scaleLinear()
     .domain([0, d3.max(allBudgets)])
@@ -290,13 +276,13 @@ function createBoxPlot(data) {
 
   // Create the main vertical line
   svg
-  .append("line")
-    .attr("x1", box_center + box_width/2)
-    .attr("x2", box_center + box_width/2)
+    .append("line")
+    .attr("x1", box_center + box_width / 2)
+    .attr("x2", box_center + box_width / 2)
     .attr("y1", yScale(min) )
     .attr("y2", yScale(max) )
     .attr("stroke", "black")
-  
+
   // Create the box plot elements
   svg
     .selectAll(".box")
@@ -309,15 +295,10 @@ function createBoxPlot(data) {
     .attr("width", box_width)
     .attr("height", (yScale(q1) - yScale(q3)))
     .attr("stroke", "black")
-    .style("fill", "steelblue")
-    .on("mouseover", handleMouseOver)
-    .on("mouseout", handleMouseOut)
-    .append("title")
-    .text((d) => d.title);
+    .attr("stroke-width", 2.5)
+    .style("fill", "steelblue");
 
-
-
-    svg
+  svg
     .selectAll(".median")
     .data([min, median, max])
     .enter()
@@ -327,16 +308,13 @@ function createBoxPlot(data) {
     .attr("x2", box_center + box_width)
     .attr("y2", (d) => yScale(d))
     .attr("stroke", "black")
-    .attr("stroke-width", 1)
+    .attr("stroke-width", 5)
     .on("mouseover", handleMouseOver)
-    .on("mouseout", handleMouseOut);
+    .on("mouseout", handleMouseOut)
+    .append("title")
+    .text((d) => d3.format(".1f")(d / 1000000) + "M");
 
   // Append x and y axes to the line chart
-  svg
-    .append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(xScale).tickSizeOuter(0));
 
   svg
     .append("g")
