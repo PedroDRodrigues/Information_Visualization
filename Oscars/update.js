@@ -247,7 +247,7 @@ function updateBoxPlot(data) {
   var max = d3.max(allBudgets)
 
   // Update the line with the new data points
-  //svg.select(".line").transition().duration(500).attr("y1", yScale(min)).attr("y2", yScale(max));
+  svg.select(".line").transition().duration(500).attr("y1", yScale(min)).attr("y2", yScale(max));
   
   // Select all existing boxes and bind the data to them
   const boxes = svg.selectAll(".box").data([allBudgets]);

@@ -265,7 +265,7 @@ function createBoxPlot(data) {
   var min = d3.min(allBudgets)
   var max = d3.max(allBudgets)
 
-  // Create y scales for the line chart
+  // Create y scale for the line chart
   const yScale = d3
     .scaleLinear()
     .domain([0, d3.max(allBudgets)])
@@ -277,10 +277,11 @@ function createBoxPlot(data) {
   // Create the main vertical line
   svg
     .append("line")
+    .attr("class", "line") // is there a better way to get the line?
     .attr("x1", box_center + box_width / 2)
     .attr("x2", box_center + box_width / 2)
-    .attr("y1", yScale(min) )
-    .attr("y2", yScale(max) )
+    .attr("y1", yScale(min))
+    .attr("y2", yScale(max))
     .attr("stroke", "black")
 
   // Create the box plot elements
@@ -296,7 +297,11 @@ function createBoxPlot(data) {
     .attr("height", (yScale(q1) - yScale(q3)))
     .attr("stroke", "black")
     .attr("stroke-width", 2.5)
-    .style("fill", "steelblue");
+    .style("fill", "steelblue")
+    .on("mouseover", handleMouseOver)
+    .on("mouseout", handleMouseOut)
+    .append("title")
+    .text((d) => d.title);
 
   svg
     .selectAll(".median")
@@ -314,7 +319,7 @@ function createBoxPlot(data) {
     .append("title")
     .text((d) => d3.format(".1f")(d / 1000000) + "M");
 
-  // Append x and y axes to the line chart
+  // Append y axis to the line chart
 
   svg
     .append("g")
