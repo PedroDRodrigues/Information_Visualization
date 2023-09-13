@@ -254,50 +254,40 @@ function createBoxPlot(data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
+  // Combine all budget values into a single array
+  const allBudgets = data.map((d) => d.budget);
+
   // Create x and y scales for the line chart
   const xScale = d3
   .scaleBand()
-  .domain(data.map((d) => d.oscar_year))
+  .domain(["Budget"])
   .range([width, 0])
   .padding(1);
   
   const yScale = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d.budget)])
+    .domain([0, d3.max(allBudgets)])
     .range([height, 0]);
 
   // Create a color scale for the boxes based on the budget data
   const colorScale = d3
     .scaleSequential(d3.interpolateBlues)
-    .domain([d3.min(data, (d) => d.budget), d3.max(data, (d) => d.budget)]);
-  
-  // Calculate the median for each data point
-  data.forEach((d) => {
-    // Filter the data for the current Oscar year
-    const yearData = data.filter((item) => item.oscar_year === d.oscar_year);
+    .domain([d3.min(allBudgets), d3.max(allBudgets)]);
 
-    // Sort the budget values for the current Oscar year
-    const sortedBudgets = yearData.map((item) => item.budget).sort((a, b) => a - b);
-
-    // Calculate the median
-    d.median = d3.median(sortedBudgets);
-    d.q1 = d3.quantile(sortedBudgets, 0.25);
-    d.q3 = d3.quantile(sortedBudgets, 0.75);
-  });
 
   // Create the box plot elements
   svg
     .selectAll(".box")
-    .data(data, (d) => d.title)
+    .data([allBudgets])
     .enter()
     .append("rect")
     .attr("class", "box")
-    .attr("x", (d) => xScale(d.oscar_year) - 10)
-    .attr("y", (d) => yScale(d.median))
-    .attr("width", 20)
-    .attr("height", (d) => yScale(d.q1))
+    .attr("x", (d) => xScale("Budget"))
+    .attr("y", (d) => yScale(d3.quantile(d, 0.25)))
+    .attr("width", 100)
+    .attr("height", (d) => 100)
     .attr("stroke", "black")
-    .style("fill", (d) => colorScale(d.budget))
+    .style("fill", (d) => colorScale(d3.median(d)))
     .style("fill-opacity", 0.5)
     .on("mouseover", handleMouseOver)
     .on("mouseout", handleMouseOut)
@@ -310,13 +300,6 @@ function createBoxPlot(data) {
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(xScale).tickSizeOuter(0));
-
-  svg
-    .selectAll(".x-axis text")
-    .attr("transform", "rotate(-45)")
-    .style("text-anchor", "end")
-    .attr("dx", "-0.8em")
-    .attr("dy", "0.15em");
 
   svg
     .append("g")
