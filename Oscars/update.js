@@ -219,3 +219,73 @@ function updateLineChart(data) {
     .append("title")
     .text((d) => d.title);
 }
+
+// Function to update the boxplot with new data
+function updateBoxPlot(data) {
+
+  // Select the SVG element of the boxplot
+  const svg = d3.select("#boxPlot").select("svg").select("g");
+
+  // Create x and y scales for the chart
+  const xScale = d3
+    .scaleBand()
+    .domain(data.map((d) => d.oscar_year))
+    .range([0, width])
+    .padding(1);
+  const yScale = d3
+    .scaleLinear()
+    .domain([0, d3.max(data, (d) => d.budget)])
+    .range([height, 0]);
+
+  // Update the y-axis with the new data points, formatting the labels for budget in millions
+  svg
+    .select(".y-axis")
+    .transition()
+    .duration(500)
+    .call(
+      d3
+        .axisLeft(yScale)
+        .tickFormat((d) => d3.format(".1f")(d / 1000000) + "M")
+        .tickSizeOuter(0)
+    );
+
+  // Select all existing boxes and bind the data to them
+  const boxes = svg.selectAll(".box").data(data, (d) => d.title);
+
+  // Update existing boxes with transitions for position, width, height, and color
+  boxes
+    .transition()
+    .duration(1000)
+    .attr("x", (d) => xScale(d.oscar_year))
+    .attr("y", (d) => yScale(d.budget))
+    .attr("width", xScale.bandwidth())
+    .attr("height", (d) => height - yScale(d.budget))
+    .attr("fill", "steelblue");
+
+  // Add new boxes for any new data points and transition them to their correct position, width, height, and color
+  boxes
+    .enter()
+    .append("rect")
+    .attr("class", "box data")
+    .attr("x", (d) => xScale(d.oscar_year))
+    .attr("y", height)
+    .attr("width", xScale.bandwidth())
+    .attr("height", 0)
+    .attr("fill", "steelblue")
+    .attr("stroke", "black")
+    .transition()
+    .duration(500)
+    .attr("y", (d) => yScale(d.budget))
+    .attr("height", (d) => height - yScale(d.budget));
+
+  // Remove any boxes that are no longer in the updated data
+  boxes.exit().transition().duration(500).attr("height", 0).remove();
+
+  // Add tooltips to all boxes with the movie title as the content
+  svg
+    .selectAll(".box")
+    .on("mouseover", handleMouseOver)
+    .on("mouseout", handleMouseOut)
+    .append("title")
+    .text((d) => d.title);
+}
