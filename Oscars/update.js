@@ -278,33 +278,9 @@ function updateBoxPlot(data) {
   // Remove the box that are no longer in the updated data
   boxes.exit().transition().duration(500).attr("height", 0).remove();
 
-  // Select all existing circles and bind the data to them
-  const medianLines = svg.selectAll(".median").data([min, median, max]);
-
-  // Update existing circles with transitions for position
-  medianLines
-    .transition()
-    .duration(500)
-    .attr("y1", (d) => yScale(d))
-    .attr("y2", (d) => yScale(d));
-
-  // Add new circles for any new data points and transition them to their correct position
-  medianLines
-    .enter()
-    .append("line")
-    .attr("x1", box_center)
-    .attr("y1", 0)
-    .attr("x2", box_center + box_width)
-    .attr("y2", 0)
-    .attr("stroke", "black")
-    .attr("stroke-width", 5)
-    .transition()
-    .duration(500)
-    .attr("y1", (d) => yScale(d))
-    .attr("y2", (d) => yScale(d));
-
-  // Remove any circles that are no longer in the updated data
-  medianLines.exit().transition().duration(500).attr("y1", 0).attr("y2", 0).remove();
+  // Update median lines
+  svg.selectAll(".medianLine").data([min, median, max]);
+  svg.selectAll(".medianLine").transition().duration(500).attr("y1", (d) => yScale(d)).attr("y2", (d) => yScale(d));
 
   // Update the y-axis with the new data points, formatting the labels for budget in millions
   svg

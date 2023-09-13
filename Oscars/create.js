@@ -308,6 +308,7 @@ function createBoxPlot(data) {
     .data([min, median, max])
     .enter()
     .append("line")
+    .attr("class", "medianLine")
     .attr("x1", box_center)
     .attr("y1", (d) => yScale(d))
     .attr("x2", box_center + box_width)
