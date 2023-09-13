@@ -260,7 +260,6 @@ function updateBoxPlot(data) {
   // Compute summary statistics used for the box:
   var data_sorted = allBudgets.sort(d3.ascending)
   var q1 = d3.quantile(data_sorted, .25)
-  //var median = d3.quantile(data_sorted, .5)
   var q3 = d3.quantile(data_sorted, .75)
   var interQuantileRange = q3 - q1
   var min = d3.min(allBudgets)
@@ -268,11 +267,20 @@ function updateBoxPlot(data) {
 
   // Compute median
   if (data_sorted.length % 2 == 0) {
-    var median = (data_sorted[data_sorted.length / 2] + data_sorted[data_sorted.length / 2 - 1]) / 2
+    var median_value = (data_sorted[data_sorted.length / 2] + data_sorted[data_sorted.length / 2 - 1]) / 2
   }
   else {
-    var median = data_sorted[(data_sorted.length - 1) / 2]
+    var median_value = data_sorted[(data_sorted.length - 1) / 2]
   }
+
+  // Create a line generator to draw the main line based on the data points
+  const line = d3
+    .line()
+    .x((d) => xScale(box_center + box_width/2))
+    .y((d) => yScale(d.budget));
+
+  // Update the line with the new data points
+  svg.select(".line").datum(data).transition().duration(500).attr("d", line);
 
   // Update existing boxes with transitions for position, width, height, and color
   boxes
@@ -301,6 +309,7 @@ function updateBoxPlot(data) {
 
   // Remove the box that are no longer in the updated data
   boxes.exit().transition().duration(500).attr("height", 0).remove();
+
 
   // Add tooltips to all boxes with the movie title as the content
   svg
