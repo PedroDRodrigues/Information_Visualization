@@ -31,6 +31,14 @@ function handleMouseOut(event, item) {
       d3.max(currentData, (d) => d.incomeperperson),
     ])
     .range([0, 1]);
+  
+  const fScale = d3
+    .scaleLog()
+    .domain([
+      d3.min(currentData, (d) => d.lifeexpectancy), 
+      d3.max(currentData, (d) => d.lifeexpectancy),
+    ])
+    .range([0, 1]);
 
   // Reset the fill color of all elements with class "country data" to black
   d3.selectAll(".country.data").attr("fill", "black");
@@ -45,5 +53,16 @@ function handleMouseOut(event, item) {
   });
 
   // Reset the fill color of all elements with class "circle data" to steelblue
-  d3.selectAll("circle.data").attr("fill", "steelblue");
+  d3.selectAll(".circle.data").attr("fill", "steelblue");
+
+  //d3.selectAll(".bee.data").attr("fill", "black");
+  
+  currentData.forEach((element) => {
+    d3.selectAll(".bee.data")
+      .filter(function (d) {
+        if ("properties" in d) {
+          return element.country == d.properties.name;
+        }})
+      .attr("fill", d3.interpolateBlues(fScale(element.lifeexpectancy)))
+  })
 }

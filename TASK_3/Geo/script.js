@@ -299,7 +299,7 @@ function createMirroredBeeswarmPlot() {
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
-    .attr("transform", /*`translate(0, ${height - margin.bottom})`);*/`translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top})`);
 
   // Create x and y scales for the beeswarm plot
   const xScale = d3
@@ -310,33 +310,25 @@ function createMirroredBeeswarmPlot() {
     ])
     .range([0, width]);
 
-  /*const yScale = d3
-    .scaleLinear()
-    .domain([
-      d3.min(currentData, (d) => d.alcconsumption),
-      d3.max(currentData, (d) => d.alcconsumption),
-    ])
-    .range([height, 0]);
-*/
-  const radiusScale = d3.scaleLinear()
+  const rScale = d3.scaleLinear()
     .domain([d3.min(currentData, (d) => d.alcconsumption), d3.max(currentData, (d) => d.alcconsumption)])
-    .range([0, 20]); 
+    .range([0, 10]); 
   
-  const fillScale = d3.scaleLinear()
+  const fScale = d3.scaleLog()
     .domain([d3.min(currentData, (d) => d.lifeexpectancy), d3.max(currentData, (d) => d.lifeexpectancy)])
-    .range(["#000", "#00F"]);
-    
+    .range([0, 1]);
+
   // Add circles to the beeswarm plot representing each country
   svg
-    .selectAll(".circle")
-    .data(currentData)
+    .selectAll(".bee")
+    .data(currentData, (d) => d.country)
     .enter()
     .append("circle")
-    .attr("class", "circle data")
+    .attr("class", "bee data")
     .attr("cx", (d) => xScale(d.incomeperperson))
-    .attr("cy", (d) => height / 2 - radiusScale(d.alcconsumption) - fillScale(d.lifeexpectancy) - d.y)
-    .attr("r",  d => radiusScale(d.alcconsumption))
-    .attr("fill", d => fillScale(d.lifeexpectancy))
+    .attr("cy", (d) => height / 2 - rScale(d.alcconsumption))
+    .attr("r", (d) => rScale(d.alcconsumption))
+    .attr("fill", (d) => d3.interpolateBlues(fScale(d.lifeexpectancy)))
     .attr("stroke", "black")
     .on("mouseover", handleMouseOver) // Function to handle mouseover event
     .on("mouseout", handleMouseOut)   // Function to handle mouseout event
@@ -360,18 +352,7 @@ function createMirroredBeeswarmPlot() {
         .tickValues(xTicks)
         .tickSizeOuter(0)
     );
-
-  /*svg
-    .append("g")
-    .attr("class", "y-axis")
-    .call(
-      d3
-        .axisLeft(yScale)
-        .tickFormat((d) => d)
-        .tickValues(yTicks)
-        .tickSizeOuter(0)
-    );
-*/
+   
   // Add labels for the x and y axes
   svg
     .append("text")
@@ -380,13 +361,4 @@ function createMirroredBeeswarmPlot() {
     .attr("y", height + margin.top + 20)
     .style("text-anchor", "middle")
     .text("Income per person");
-
-  /*svg
-    .append("text")
-    .attr("class", "y-axis-label")
-    .attr("x", -height / 2)
-    .attr("y", -margin.left + 30)
-    .style("text-anchor", "middle")
-    .attr("transform", "rotate(-90)")
-    .text("Need to write");*/
 }
