@@ -415,9 +415,7 @@ function createMirroredBeeswarmPlot() {
     })    
     .attr("r", (d) => rScale(d.circle.data.alcconsumption))
     .attr("fill", "steelblue")
-    .attr("stroke", "black")
-    .on("mouseover", handleMouseOver) // Function to handle mouseover event
-    .on("mouseout", handleMouseOut)   // Function to handle mouseout event 
+    .attr("stroke", "black") 
     .append("title")
     .text((d) => d.circle.data && d.circle.data.country);
 
