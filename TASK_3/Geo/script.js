@@ -332,9 +332,10 @@ function dodge (data, {radius, x}) {
 
 // Function to create a mirrored beeswarm plot
 function createMirroredBeeswarmPlot() {
+  
   // Filter the data to remove entries with missing incomeperperson or alcconsumption values
   currentData = globalDataCapita.filter(function (d) {
-    return d.incomeperperson !== "" && d.alcconsumption !== "";
+    return d.incomeperperson !== "" && !isNaN(d.incomeperperson) && d.alcconsumption !== "";
   })
 
   // Create an SVG element to hold the beeswarm plot
@@ -364,9 +365,14 @@ function createMirroredBeeswarmPlot() {
     .domain([d3.min(currentData, (d) => d.alcconsumption), d3.max(currentData, (d) => d.alcconsumption)])
     .range([0, 10]); 
   
-  const fScale = d3.scaleLog()
-    .domain([d3.min(currentData, (d) => d.lifeexpectancy), d3.max(currentData, (d) => d.lifeexpectancy)])
-    .range([0, 1]);
+  // Create a color scale for the incomeperperson values
+  const colorScale = d3
+    .scaleSequential()
+    .domain([
+      d3.min(currentData, (d) => d.incomeperperson),
+      d3.max(currentData, (d) => d.incomeperperson),
+    ])
+    .interpolator(d3.interpolateBlues);
   
   const padding = 10;
 
@@ -376,52 +382,52 @@ function createMirroredBeeswarmPlot() {
   // Define your circles using the dodge function and index them
   const circles = dodge(currentData, { radius: 5, x: (d) => xScale(d.incomeperperson) }).map((circle, index) => {
     circleIndex[index] = circle.data; // Associate each circle with its data point
-    return circle;
+    return {
+      circle: circle,
+      //country: circle.data.country, // Add the 'country' property to each element
+    };
   });
 
   // Filter circles based on your criteria (example: incomeperperson)
   const filteredCircles = circles.filter((circle) => {
-    const dataPoint = circleIndex[circles.indexOf(circle)]; // Get the associated data point
-    return dataPoint.incomeperperson; // Filter based on your criteria
+    return circle.circle.data.incomeperperson !== "" && !isNaN(circle.circle.data.incomeperperson);
   });
 
-// Add circles to the mirrored beeswarm plot representing each country
-svg
-  .selectAll(".circle")
-  .data(filteredCircles, (d) => d.data.country)
-  .enter()
-  .append("circle")
-  .attr("class", "bee data")
-  .attr("cx", (d) => xScale(d.data.incomeperperson))
-  .attr("cy", (d, i) => {
-    let cy;
-    if (isNaN(d.data.alcconsumption)) {
-      // Calculate the y-position for circles without 'alcconsumption' data
-      cy = i % 2 === 0 ? height / 2 + padding : height / 2 - padding;
-    } else {
-      // Calculate the y-position for circles with 'alcconsumption' data
-      const yOffset = rScale(d.data.alcconsumption) *0.5; // Adjust the vertical spacing as needed
-      cy = height / 2 - yOffset + (i % 2 === 0 ? -padding : padding);
-    }
-    console.log(`Circle ${i + 1} - cx: ${xScale(d.data.incomeperperson)}, cy: ${cy}`);
-    return cy;
-  })
-  .attr("r", (d) => rScale(d.data.alcconsumption))
-  .attr("fill", (d) => {
-    const lifeExpectancy = d.data.lifeexpectancy;
-    const interpolatedColor = d3.interpolateBlues(fScale(lifeExpectancy));
-    console.log(`Life Expectancy: ${lifeExpectancy}, Interpolated Color: ${interpolatedColor}`);
-    return interpolatedColor;
-  })  .attr("stroke", "black")
-  .on("mouseover", handleMouseOver) // Function to handle mouseover event
-  .on("mouseout", handleMouseOut)   // Function to handle mouseout event
-  .append("title")
-  .text((d) => d.data.country);
+  // Add circles to the mirrored beeswarm plot representing each country
+  svg
+    .selectAll(".circle")
+    .data(filteredCircles, (d) => (d.circle.data ? d.circle.data.country : null))
+    .enter()
+    .append("circle")
+    .attr("class", "bee data")
+    .attr("cx", (d) => xScale(d.circle.data.incomeperperson))
+    .attr("cy", (d, i) => {
+      let cy;
+      if (isNaN(d.circle.data.alcconsumption)) {
+        // Calculate the y-position for circles without 'alcconsumption' data
+        cy = i % 2 === 0 ? height / 2 + padding : height / 2 - padding;
+      } else {
+        // Calculate the y-position for circles with 'alcconsumption' data
+        const yOffset = rScale(d.circle.data.alcconsumption) * 0.1; // Adjust the vertical spacing as needed
+        cy = height / 2 - yOffset + (i % 2 === 0 ? - padding : padding);
+      }
+      return cy;
+    })    
+    .attr("r", (d) => rScale(d.circle.data.alcconsumption))
+    .attr("fill", "steelblue")
+    .attr("stroke", "black")
+    .on("mouseover", handleMouseOver) // Function to handle mouseover event
+    .on("mouseout", handleMouseOut)   // Function to handle mouseout event 
+    .append("title")
+    .text((d) => d.circle.data && d.circle.data.country);
+
 
   // Create tick marks and labels for the x and y axes
   var xTicks = [];
+  var yTicks = [];
   for (let index = 0; index <= 1; index += 0.25) {
     xTicks.push(Math.round(xScale.invert(index * width)));
+    yTicks.push(Math.round(yScale.invert(index * height)));
   }
 
   svg
@@ -435,7 +441,7 @@ svg
         .tickValues(xTicks)
         .tickSizeOuter(0)
     );
-   
+
   // Add labels for the x and y axes
   svg
     .append("text")
@@ -444,4 +450,5 @@ svg
     .attr("y", height + margin.top + 20)
     .style("text-anchor", "middle")
     .text("Income per person");
+
 }
