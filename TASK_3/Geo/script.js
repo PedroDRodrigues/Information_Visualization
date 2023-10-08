@@ -287,7 +287,7 @@ function createScatterPlot() {
 function dodge (data, {radius, x}) {
   const radius2 = radius ** 2;
   const circles = data.map(d => ({x: x(d), data: d})).sort((a, b) => a.x - b.x);
-  const epsilon = 1e-3;
+  const epsilon = 1;
   let head = null, tail = null;
 
   // Returns true if circle ⟨x,y⟩ intersects with any circle in the queue.
@@ -324,7 +324,9 @@ function dodge (data, {radius, x}) {
     // Add b to the queue.
     b.next = null;
     if (head === null) head = tail = b;
-    else tail = tail.next = b;
+    else {
+      tail = tail.next = b;
+    }
   }
 
   return circles;
@@ -374,13 +376,20 @@ function createMirroredBeeswarmPlot() {
     ])
     .interpolator(d3.interpolateBlues);
   
-  const padding = 10;
+  const padding = 20;
+
+  // Define the amount of jitter for the y-coordinates (adjust as needed)
+  const yJitterAmount = 100; // You can change this value as needed
+
+  // Define a random number generator function for y-jitter
+  const randomYJitter = () => Math.random() * yJitterAmount - yJitterAmount / 2;
+
 
   // Create an empty index or mapping object
   const circleIndex = {};
   
   // Define your circles using the dodge function and index them
-  const circles = dodge(currentData, { radius: 5, x: (d) => xScale(d.incomeperperson) }).map((circle, index) => {
+  const circles = dodge(currentData, { radius: (d) => rScale(d.alcconsumption), x: (d) => xScale(d.incomeperperson) }).map((circle, index) => {
     circleIndex[index] = circle.data; // Associate each circle with its data point
     return {
       circle: circle,
@@ -402,13 +411,14 @@ function createMirroredBeeswarmPlot() {
     .attr("cx", (d) => xScale(d.circle.data.incomeperperson))
     .attr("cy", (d, i) => {
       let cy;
+      const yOffset = rScale(d.circle.data.alcconsumption) * 0.1;
       if (isNaN(d.circle.data.alcconsumption)) {
         // Calculate the y-position for circles without 'alcconsumption' data
-        cy = i % 2 === 0 ? height / 2 + padding : height / 2 - padding;
+        cy = i % 2 === 0 ? height / 2 + padding - yOffset + randomYJitter() : height / 2 - padding - yOffset + randomYJitter();
       } else {
         // Calculate the y-position for circles with 'alcconsumption' data
-        const yOffset = rScale(d.circle.data.alcconsumption) * 0.1; // Adjust the vertical spacing as needed
-        cy = height / 2 - yOffset + (i % 2 === 0 ? - padding : padding);
+        cy = height / 2 - yOffset + randomYJitter();
+        cy += (i % 2 === 0 ? - padding : padding);
       }
       return cy;
     })    
