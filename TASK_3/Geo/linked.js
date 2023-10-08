@@ -73,3 +73,43 @@ function handleMouseOut(event, item) {
       .attr("fill", fScale(element.lifeexpectancy))
   })
 }
+
+// Function to show the tooltip on hover
+function showTooltip(event, d) {
+  const tooltip = document.getElementById('tooltip');
+  const countryName = document.getElementById('countryName');
+  const incomePerPerson = document.getElementById('incomePerPerson');
+  const alcConsumption = document.getElementById('alcConsumption');
+  const employRate = document.getElementById('employRate');
+
+  countryName.textContent = d.country;
+  incomePerPerson.textContent = d.incomeperperson;
+  alcConsumption.textContent = d.alcconsumption;
+  employRate.textContent = d.employrate;
+
+  tooltip.style.left = event.pageX + 'px';
+  tooltip.style.top = event.pageY + 'px';
+  tooltip.style.display = 'block';
+}
+
+// Function to hide the tooltip on mouseout
+function hideTooltip() {
+  const tooltip = document.getElementById('tooltip');
+  tooltip.style.display = 'none';
+}
+
+// Function to add or remove a country from the drawer
+function toggleDrawerItem(d) {
+  console.log("reerer");
+  const selectedCountriesList = document.getElementById('selectedCountries');
+  const countryListItem = document.createElement('li');
+  countryListItem.textContent = d.country;
+
+  if (selectedCountriesList.innerHTML.includes(d.country)) {
+    // Country already in the drawer, remove it
+    selectedCountriesList.innerHTML = selectedCountriesList.innerHTML.replace(`<li>${d.country}</li>`, '');
+  } else {
+    // Country not in the drawer, add it
+    selectedCountriesList.appendChild(countryListItem);
+  }
+}

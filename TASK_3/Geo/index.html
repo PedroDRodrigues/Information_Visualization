@@ -19,6 +19,23 @@
             #choroplethTitle {
                 text-align: center;
             }
+            .tooltip {
+                position: absolute;
+                background-color: white;
+                border: 1px solid #ccc;
+                padding: 10px;
+                display: none;
+            }
+            .drawer {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                background-color: #f0f0f0; /* Set the background color as desired */
+                padding: 10px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow effect */
+                z-index: 100; /* Optional: Set a higher z-index to ensure it's on top of other content */
+            }
         </style>
         <script src="https://d3js.org/d3.v7.min.js"></script>
         <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -37,5 +54,20 @@
             <div class="visualization" id="scatterPlot"></div>
             <div class="visualization" id="beeswarm-plot"></div>
         </div>
+
+        <!-- Additional HTML for Tooltip and Drawer -->
+        <div id="tooltip" class="tooltip">
+            <strong>Country:</strong> <span id="countryName"></span><br>
+            <strong>Income per person:</strong> <span id="incomePerPerson"></span><br>
+            <strong>Alcohol Consumption:</strong> <span id="alcConsumption"></span><br>
+            <strong>Employment Rate:</strong> <span id="employRate"></span>
+        </div>
+
+        <div id="drawer" class="drawer">
+            <h2>Selected Countries</h2>
+            <ul id="selectedCountries"></ul>
+        </div>
+
+        </body>
     </body>
 </html>
