@@ -28,7 +28,7 @@
             }
             .drawer {
                 position: fixed;
-                top: 0;
+                bottom: 0;
                 left: 0;
                 width: 100%;
                 background-color: #f0f0f0; /* Set the background color as desired */
@@ -36,6 +36,13 @@
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: Add a shadow effect */
                 z-index: 100; /* Optional: Set a higher z-index to ensure it's on top of other content */
             }
+            .plots {
+            margin-bottom: 80px; /* Adjust the margin to create space for the fixed drawer at the bottom */
+            transition: margin-bottom 0.3s ease; /* Add a smooth transition effect */
+        }
+        .drawer-open .plots {
+            margin-bottom: 150px; /* Increase the margin when the drawer is open */
+        }
         </style>
         <script src="https://d3js.org/d3.v7.min.js"></script>
         <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -52,7 +59,6 @@
                 <div class="visualization" id="choroplethLabel"></div>
             </div>
             <div class="visualization" id="scatterPlot"></div>
-            <div class="visualization" id="beeswarm-plot"></div>
         </div>
 
         <!-- Additional HTML for Tooltip and Drawer -->
