@@ -369,8 +369,8 @@ function createMirroredBeeswarmPlot() {
   const colorScale = d3
     .scaleSequential()
     .domain([
-      d3.min(currentData, (d) => d.incomeperperson),
-      d3.max(currentData, (d) => d.incomeperperson),
+      d3.min(currentData, (d) => d.lifeexpectancy),
+      d3.max(currentData, (d) => d.lifeexpectancy),
     ])
     .interpolator(d3.interpolateBlues);
   
@@ -384,7 +384,6 @@ function createMirroredBeeswarmPlot() {
     circleIndex[index] = circle.data; // Associate each circle with its data point
     return {
       circle: circle,
-      //country: circle.data.country, // Add the 'country' property to each element
     };
   });
 
@@ -414,8 +413,10 @@ function createMirroredBeeswarmPlot() {
       return cy;
     })    
     .attr("r", (d) => rScale(d.circle.data.alcconsumption))
-    .attr("fill", "steelblue")
+    .attr("fill", (d) => colorScale(d.circle.data.lifeexpectancy))
     .attr("stroke", "black") 
+    .on("mouseover", handleMouseOver) // Function to handle mouseover event
+    .on("mouseout", handleMouseOut)   // Function to handle mouseout event
     .append("title")
     .text((d) => d.circle.data && d.circle.data.country);
 
