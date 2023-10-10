@@ -14,18 +14,30 @@ function startDashboard() {
   // Load the csv data using D3.js.
   d3.csv("ev_cars.csv")
     .then((data) => {
+
+      const cleanData = removeColumn(data, 'PlugType');
+      console.log(cleanData);
+
       // Once the data is loaded successfully, store it in the globalData variable.
       globalData = data;
       totalModels = data;
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      //createParallelCoordinates(data);
+      createParallelCoordinates(cleanData);
       //createParallelSets(data);
     })
     .catch((error) => {
       // If there's an error while loading the csv data, log the error.
       console.error("Error loading the csv file:", error);
+    });
+}
+
+function removeColumn(data, columnToRemove) {
+    return data.map((obj) => {
+        const newObj = { ...obj }; // Create a shallow copy of the object
+        delete newObj[columnToRemove]; // Remove the specified column
+        return newObj;
     });
 }
 
@@ -95,4 +107,74 @@ function createBarChart(data) {
         .append("g")
         .attr("class", "y-axis")
         .call(d3.axisLeft(yScale).ticks(3)); // change ?
+}
+
+function createParallelCoordinates(data) {
+
+    const selectedAttributes = ['AccelSec', 'Battery_Pack Kwh', 'Efficiency_WhKm', 'FastCharge_KmH', 'PriceEuro', 'Range_Km', 'TopSpeed_KmH'];
+
+    const selectedData = data.map((d) => {
+        const selectedObj = {};
+        selectedAttributes.forEach((attr) => {
+          selectedObj[attr] = d[attr];
+        });
+        return selectedObj;
+    });
+    
+    // Select the #parallelCoords element and append an SVG to it
+    const svg = d3
+        .select("#parallelCoords")
+        .append("svg")
+        .attr("width", window.innerWidth)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const dimensions = Object.keys(selectedData[0]).filter(function(d) { return d != "Species" });
+
+    // For each dimension, build a linear scale.
+    const yScale = {}
+    for (i in dimensions) {
+      const name = dimensions[i]
+      yScale[name] = d3.scaleLinear()
+        .domain( d3.extent(data, function(d) { return +d[name]; }) )
+        .range([height, 0])
+    }
+
+    // Build the X scale -> it find the best position for each Y axis
+    xScale = d3
+      .scalePoint()
+      .range([0, width])
+      .padding(0.15)
+      .domain(dimensions);
+
+    // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
+    function path(d) {
+        return d3.line()(dimensions.map(function(p) { return [xScale(p), yScale[p](d[p])]; }));
+    }
+
+     // Draw the lines
+    svg
+      .selectAll(".lines")
+      .data(data)
+      .join("path")
+      .attr("d",  path)
+      .style("fill", "none")
+      .style("stroke", "#69b3a2")
+      .style("opacity", 0.5);
+
+    
+    // Draw the axis
+    svg
+      .selectAll("myAxis")
+      .data(dimensions).enter()
+      .append("g")
+      .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; })
+      .each(function(d) { d3.select(this).call(d3.axisLeft().scale(yScale[d])); })
+      .append("text")
+      .style("text-anchor", "middle")
+      .attr("y", -9)
+      .text(function(d) { return d; })
+      .style("fill", "black");
+
 }
