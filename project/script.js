@@ -12,6 +12,7 @@ const height = 150 - margin.top - margin.bottom;
 // Keep track of the positions of all axes
 const axisPositions = {};
 const axisCombination = ['AccelSec', 'Battery_Pack Kwh', 'Efficiency_WhKm', 'FastCharge_KmH', 'PriceEuro', 'Range_Km', 'TopSpeed_KmH'];
+const spaceBetweenAxes = width / 6;
 
 // Create a set to store custom axis combinations
 const customAxisCombinations = new Set();
@@ -229,7 +230,7 @@ function createParallelCoordinates(data, currentAxisCombination) {
         .text(function(d) { return d; })
         .style("fill", "black");
       
-
+    console.log("here");
     // Add drag behavior to axis labels
     axisGroups
       .call(
@@ -255,18 +256,37 @@ function createParallelCoordinates(data, currentAxisCombination) {
             const oldIndex = axisCombination.indexOf(draggedAxis);
             const newIndex = axisCombination.indexOf(closestAxis);
 
+            console.log(oldIndex);
+            console.log(newIndex);
+
             if (oldIndex !== newIndex) {
               axisCombination[oldIndex] = closestAxis;
               axisCombination[newIndex] = draggedAxis;
-
+              
               // Redraw the axis labels and data lines
-              svg.selectAll(".axis")
+              axisGroups
+                .selectAll(".axis")
                 .transition()
-                .attr("transform", function (d) {
-                  return "translate(" + xScale(d) + ")";
+                .duration(500)
+                .attr("transform", function (d, i) {
+                  const newIndex = axisCombination.indexOf(d);
+                  return "translate(" + (margin.left + newIndex * spaceBetweenAxes) + ")";
                 });
 
-              svg.selectAll(".lines").attr("d", path);
+              // Clear the old lines by removing them
+              svg.selectAll(".lines").remove();
+
+              // Redraw the data lines with the new order of dimensions
+              svg
+                .selectAll(".lines")
+                .data(data)
+                .enter()
+                .append("path")
+                .attr("class", "lines")
+                .attr("d", path)
+                .attr("fill", "none")
+                .attr("stroke", "#69b3a2")
+                .attr("opacity", 0.5);
             }
           })
         );
