@@ -25,7 +25,7 @@ function startDashboard() {
       // Create different visualizations using the loaded data.
       createBarChart(data);
       createParallelCoordinates(cleanData);
-      //createParallelSets(data);
+      createParallelSets(data);
     })
     .catch((error) => {
       // If there's an error while loading the csv data, log the error.
@@ -142,7 +142,7 @@ function createParallelCoordinates(data) {
     }
 
     // Build the X scale -> it find the best position for each Y axis
-    xScale = d3
+    const xScale = d3
       .scalePoint()
       .range([0, width])
       .padding(0.15)
@@ -153,11 +153,19 @@ function createParallelCoordinates(data) {
         return d3.line()(dimensions.map(function(p) { return [xScale(p), yScale[p](d[p])]; }));
     }
 
+    // Function to update the positions of data points
+    /*function updateDataPoints() {
+      svg.selectAll(".lines")
+          .attr("d", path);
+    }*/
+
      // Draw the lines
     svg
       .selectAll(".lines")
       .data(data)
-      .join("path")
+      .enter()
+      .append("path")
+      .attr("class", "lines")
       .attr("d",  path)
       .style("fill", "none")
       .style("stroke", "#69b3a2")
@@ -167,7 +175,8 @@ function createParallelCoordinates(data) {
     // Draw the axis
     svg
       .selectAll("myAxis")
-      .data(dimensions).enter()
+      .data(dimensions)
+      .enter()
       .append("g")
       .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; })
       .each(function(d) { d3.select(this).call(d3.axisLeft().scale(yScale[d])); })
@@ -176,5 +185,53 @@ function createParallelCoordinates(data) {
       .attr("y", -9)
       .text(function(d) { return d; })
       .style("fill", "black");
+
+    // Add a variable to keep track of the currently dragged axis
+    let draggedAxis = null;
+
+    // Add event handlers for axis drag and drop
+    const drag = d3.drag()
+      .on("start", function (event, d) {
+        draggedAxis = d;
+      })
+      .on("drag", function (event) {
+        const x = event.x;
+        const newDimension = xScale.domain()[Math.round(x / (width / dimensions.length))];
+
+        // Update the order of dimensions
+        const oldIndex = dimensions.indexOf(draggedAxis);
+        const newIndex = dimensions.indexOf(newDimension);
+        dimensions[oldIndex] = newDimension;
+        dimensions[newIndex] = draggedAxis;
+
+        xScale.domain(dimensions);
+
+        // Redraw the axis and data lines
+        svg.selectAll("g").filter(d => d === draggedAxis)
+          .attr("transform", `translate(${x})`)
+          .call(d3.axisLeft().scale(yScale[draggedAxis]));
+        svg.selectAll(".lines")
+          .attr("d", path);
+
+        // Move the dragged axis to the new position
+        //svg.selectAll("g").filter(d => d === draggedAxis)
+          //.attr("transform", `translate(${x})`);
+
+        // Update data points
+        //updateDataPoints();
+      })
+      .on("end", function () {
+        draggedAxis = null;
+      });
+
+    // Add drag behavior to axis labels
+    svg.selectAll("g")
+      .call(drag);
+    
+    //updateDataPoints();
+}
+
+//function to create a parallel set
+function createParallelSets(data) {
 
 }
