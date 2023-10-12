@@ -34,7 +34,7 @@ function startDashboard() {
       // Create different visualizations using the loaded data.
       createBarChart(data);
       createParallelSets(data);
-      createParallelCoordinates(cleanData, axisCombination);
+      createParallelCoordinates(cleanData);
 
     })
     .catch((error) => {
@@ -119,55 +119,11 @@ function createBarChart(data) {
         .call(d3.axisLeft(yScale).ticks(3)); // change ?
 }
 
-// Function to create the axis dragging behavior
-function createAxisDrag() {
-  return d3.drag()
-      .on("start", function(event) {
-          // Clone the axis element
-          const clone = d3
-            .select(this)
-            .node()
-            .cloneNode(true);
-
-          clone.style.pointerEvents = "none"; // Disable pointer events for the clone
-
-          // Append the clone to the parent node
-          this.parentNode.appendChild(clone);
-
-          // Prevent the default behavior of the mouse event
-          event.sourceEvent.preventDefault();
-      })
-      .on("drag", function(event) {
-          // Update the position of the dragging axis
-          const clone = this.parentNode.querySelector(".axis-dragging");
-          //clone.setAttribute("transform", `translate(${event.x}, ${event.y})`);
-
-          // Prevent the default behavior of the mouse event
-          event.sourceEvent.preventDefault();
-      })
-      .on("end", function(event) {
-          // Remove the clone
-          const clone = this.parentNode.querySelector(".axis-dragging");
-          clone.parentNode.removeChild(clone);
-
-          // Update the current axis combination based on the arrangement
-          currentAxisCombination = updateAxisCombination();
-
-          // Update the parallel coordinates plot with the new axis combination
-          updateParallelCoordinates(currentAxisCombination);
-      });
-}
-
-// Function to save the current axis combination as a custom combination
-function saveCustomAxisCombination() {
-  customAxisCombinations.add(currentAxisCombination.join(","));
-}
-
-function createParallelCoordinates(data, currentAxisCombination) {
+function createParallelCoordinates(data) {
 
     const selectedData = data.map((d) => {
         const selectedObj = {};
-        currentAxisCombination.forEach((attr) => {
+        axisCombination.forEach((attr) => {
           selectedObj[attr] = d[attr];
         });
         return selectedObj;
@@ -183,13 +139,14 @@ function createParallelCoordinates(data, currentAxisCombination) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     // For each dimension, build a linear scale.
-    const yScale = {}
-    for (i in axisCombination) {
-      const name = axisCombination[i]
-      yScale[name] = d3.scaleLinear()
-        .domain( d3.extent(data, function(d) { return +d[name]; }) )
-        .range([height, 0])
-    }
+    const yScale = {};
+    axisCombination.forEach((attr) => {
+      yScale[attr] = d3.scaleLinear()
+        .domain(d3.extent(data, (d) => +d[attr]))
+        .range([height, 0]);
+    });
+
+    console.log("here", yScale);
 
     // Build the X scale -> it find the best position for each Y axis
     const xScale = d3
@@ -198,10 +155,26 @@ function createParallelCoordinates(data, currentAxisCombination) {
       .padding(0.15)
       .domain(axisCombination);
 
+    // Calculate the mean values of each attribute
+    const meanValues = {};
+    axisCombination.forEach((attr) => {
+      meanValues[attr] = d3.mean(data, (d) => +d[attr]);
+    });
+
+    console.log(meanValues);
+
     // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
     function path(d) {
         return d3.line()(axisCombination.map(function(p) { return [xScale(p), yScale[p](d[p])]; }));
     }
+
+    // Draw the axis
+    const axisGroups = svg
+      .selectAll(".axis")
+      .data(axisCombination)
+      .enter()
+      .append("g")
+      .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; });
 
      // Draw the lines
     svg
@@ -215,27 +188,40 @@ function createParallelCoordinates(data, currentAxisCombination) {
       .attr("stroke", "#69b3a2")
       .attr("opacity", 0.5);
     
-    // Draw the axis
-    const axisGroups = svg
-      .selectAll(".axis")
-      .data(axisCombination).enter()
-      .append("g")
-      .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; });
+
 
     axisGroups
       .each(function(d) { d3.select(this).call(d3.axisLeft().scale(yScale[d])); })
-        .append("text")
-        .style("text-anchor", "middle")
-        .attr("y", height - margin.top + margin.bottom - 10)
-        .text(function(d) { return d; })
-        .style("fill", "black");
-      
-    console.log("here");
+      .append("text")
+      .style("text-anchor", "middle")
+      .attr("y", height - margin.top + margin.bottom - 10)
+      .text(function(d) { return d; })
+      .style("fill", "black");
+    
+    const pointMeans = axisGroups
+      .select(".points")
+      .data(axisCombination)
+      .enter()
+      .append("circle")
+      .attr("class", "meanPoint")
+      .attr("data-axis", (d) => d) // Set the data-axis attribute
+      .attr("r", 2)
+      .attr("cx",  function (d) { return xScale(d) })
+      .attr("cy", function (d) { return yScale[d](meanValues[d]) })
+      .attr("fill", "black");
+
     // Add drag behavior to axis labels
     axisGroups
       .call(
         d3.drag()
           .on("start", function (event, d) {
+            //Remove the mean point
+            pointMeans
+              .filter(function (circle) {
+                return circle === d;
+              })
+              .attr("opacity", 0);
+
             // Store the original position for reference
             d3.select(this).attr("data-original-x", d3.select(this).attr("transform"));
           })
@@ -243,6 +229,8 @@ function createParallelCoordinates(data, currentAxisCombination) {
             const x = event.x;
             const originalX = d3.select(this).attr("data-original-x");
             const draggedAxis = d;
+
+            //console.log("axis:", draggedAxis);
 
             // Update the position of the axis label
             d3.select(this).attr("transform", `translate(${x})`);
@@ -252,25 +240,28 @@ function createParallelCoordinates(data, currentAxisCombination) {
               return Math.abs(xScale(b) - x) < Math.abs(xScale(a) - x) ? b : a;
             });
 
+            //console.log("closest:", closestAxis);
+
             // Update the order of dimensions
             const oldIndex = axisCombination.indexOf(draggedAxis);
             const newIndex = axisCombination.indexOf(closestAxis);
 
-            console.log(oldIndex);
-            console.log(newIndex);
+            //console.log("Old Index:", oldIndex);
+            //console.log("New Index:", newIndex);
 
             if (oldIndex !== newIndex) {
               axisCombination[oldIndex] = closestAxis;
               axisCombination[newIndex] = draggedAxis;
-              
+
               // Redraw the axis labels and data lines
               axisGroups
                 .selectAll(".axis")
                 .transition()
                 .duration(500)
-                .attr("transform", function (d, i) {
+                .attr("transform", function (d) {
                   const newIndex = axisCombination.indexOf(d);
-                  return "translate(" + (margin.left + newIndex * spaceBetweenAxes) + ")";
+                  console.log("olaaa");
+                  return "translate(" + (margin.left - newIndex * spaceBetweenAxes) + ")";
                 });
 
               // Clear the old lines by removing them
@@ -287,9 +278,23 @@ function createParallelCoordinates(data, currentAxisCombination) {
                 .attr("fill", "none")
                 .attr("stroke", "#69b3a2")
                 .attr("opacity", 0.5);
-            }
-          })
-        );
-}
+          }
+        }) 
+        .on("end", function(event, d) {
+          //Ensure the final position of the attached point matches the axis label's position
+          const x = event.x; // Extract x-coordinate
+          const draggedAxis = d;
+          pointMeans
+            .filter(function(circle) {
+              return circle === draggedAxis;
+            })
+            .attr("cx", x) // Set the x-coordinate to match the final position
+            .attr("cy", yScale[draggedAxis](meanValues[draggedAxis])) // Update the y-coordinate based on the mean value for the axis
+            .attr("opacity", 1);
+        })
+      );
+
+
+  }
 
 function createParallelSets(data) {}
