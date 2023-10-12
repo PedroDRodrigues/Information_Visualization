@@ -87,6 +87,7 @@ function showTooltip(event, d) {
   alcConsumption.textContent = d.alcconsumption;
   employRate.textContent = d.employrate;
 
+
   tooltip.style.left = event.pageX + 'px';
   tooltip.style.top = event.pageY + 'px';
   tooltip.style.display = 'block';
@@ -100,14 +101,22 @@ function hideTooltip() {
 
 // Function to add or remove a country from the drawer
 function toggleDrawerItem(d) {
-  console.log("reerer");
   const selectedCountriesList = document.getElementById('selectedCountries');
   const countryListItem = document.createElement('li');
-  countryListItem.textContent = d.country;
 
-  if (selectedCountriesList.innerHTML.includes(d.country)) {
+  var country;
+
+  if ("properties" in d) {
+    countryListItem.textContent = d.properties.name;
+    country = d.properties.name;
+  } else {
+    countryListItem.textContent = d.country;
+    country = d.country;
+  }
+
+  if (selectedCountriesList.innerHTML.includes(country)) {
     // Country already in the drawer, remove it
-    selectedCountriesList.innerHTML = selectedCountriesList.innerHTML.replace(`<li>${d.country}</li>`, '');
+    selectedCountriesList.innerHTML = selectedCountriesList.innerHTML.replace(`<li>${country}</li>`, '');
   } else {
     // Country not in the drawer, add it
     selectedCountriesList.appendChild(countryListItem);

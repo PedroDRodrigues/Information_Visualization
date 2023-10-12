@@ -105,8 +105,13 @@ function createChoroplethMap() {
     .attr("stroke", "black")
     .on("mouseover", handleMouseOver) // Function to handle mouseover event
     .on("mouseout", handleMouseOut)   // Function to handle mouseout event  
+    .on("click", (event, d) => {
+      //console.log(d); // Print the data associated with the clicked element
+      toggleDrawerItem(d);
+    }) 
     .append("title")
-    .text((d) => d.properties.name);
+    .text((d) => d.properties.name)
+
 
   // Set the fill color of each country based on its incomeperperson value
   currentData.forEach((element) => {
