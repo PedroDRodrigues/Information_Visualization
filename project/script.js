@@ -161,6 +161,7 @@ function createParallelCoordinates(data) {
       .data(axisCombination)
       .enter()
       .append("g")
+      .attr("class", "axisGroup")
       .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; });
 
      // Draw the lines
@@ -208,10 +209,11 @@ function createParallelCoordinates(data) {
           })
           .on("drag", function (event, d) {
             const x = event.x;
+            const originalX = d3.select(this).attr("data-original-x");
             const draggedAxis = d;
 
             // Update the position of the axis label
-            d3.select(this).attr("transform", `translate(${x})`);
+            //d3.select(this).attr("transform", `translate(${x})`);
 
             // Find the nearest axis and swap positions
             const closestAxis = axisCombination.reduce(function (a, b) {
@@ -224,7 +226,16 @@ function createParallelCoordinates(data) {
               .duration(250)
               .attr("transform", `translate(${xScale(closestAxis)}, 0)`);
             
-            //console.log(closestAxisElement);
+            console.log("closest: ", closestAxis);
+            console.log("dragged: ", draggedAxis);
+
+            d3.selectAll(".axisGroup")
+              .filter(function(axis) {
+                return axis == closestAxis;
+              })
+              .transition()
+              .duration(150)
+              .attr("transform", `translate(${xScale(draggedAxis)}, 0)`);
 
             // Update the order of dimensions
             const oldIndex = axisCombination.indexOf(draggedAxis);
@@ -238,11 +249,15 @@ function createParallelCoordinates(data) {
                 meanValues[attr] = d3.mean(data, (d) => +d[attr]);
               });
 
+              // update the domain on xScale
+              xScale.domain(axisCombination);
+
               // Redraw the data lines with the new order of dimensions
               svg
                 .selectAll(".lines")
                 .data(data)
                 .transition()
+                .duration(300)
                 .attr("d", (d) => d3.line()(axisCombination.map(function(p) {return ([xScale(p), yScale[p](d[p])]);})))
           }
         }) 
@@ -252,8 +267,8 @@ function createParallelCoordinates(data) {
           const draggedAxis = d;
 
           d3.selectAll(".meanPoint")
-            .attr("cx",  function (d) { return xScale(d) })
-            .attr("cy", function (d) { return yScale[d](meanValues[d]) })
+            .attr("cx", (a) => xScale(a) )
+            .attr("cy", (a) => yScale[a](meanValues[a]) )
             .attr("opacity", 1);
         })
       );
