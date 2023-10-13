@@ -14,10 +14,6 @@ const axisPositions = {};
 const axisCombination = ['AccelSec', 'Battery_Pack Kwh', 'Efficiency_WhKm', 'FastCharge_KmH', 'PriceEuro', 'Range_Km', 'TopSpeed_KmH'];
 const spaceBetweenAxes = width / 6;
 
-// Create a set to store custom axis combinations
-const customAxisCombinations = new Set();
-
-
 // This function initiates the dashboard and loads the csv data.
 function startDashboard() {
   // Load the csv data using D3.js.
@@ -139,34 +135,25 @@ function createParallelCoordinates(data) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     // For each dimension, build a linear scale.
-    const yScale = {};
-    axisCombination.forEach((attr) => {
-      yScale[attr] = d3.scaleLinear()
-        .domain(d3.extent(data, (d) => +d[attr]))
-        .range([height, 0]);
-    });
-
-    console.log("here", yScale);
-
-    // Build the X scale -> it find the best position for each Y axis
     const xScale = d3
       .scalePoint()
       .range([0, width])
       .padding(0.15)
       .domain(axisCombination);
 
+    const yScale = {};
+    axisCombination.forEach((attr) => {
+      yScale[attr] = d3
+        .scaleLinear()
+        .domain(d3.extent(data, (d) => +d[attr]))
+        .range([height, 0]);
+    });
+
     // Calculate the mean values of each attribute
     const meanValues = {};
     axisCombination.forEach((attr) => {
       meanValues[attr] = d3.mean(data, (d) => +d[attr]);
     });
-
-    console.log(meanValues);
-
-    // The path function take a row of the csv as input, and return x and y coordinates of the line to draw for this raw.
-    function path(d) {
-        return d3.line()(axisCombination.map(function(p) { return [xScale(p), yScale[p](d[p])]; }));
-    }
 
     // Draw the axis
     const axisGroups = svg
@@ -177,18 +164,16 @@ function createParallelCoordinates(data) {
       .attr("transform", function(d) { return "translate(" + xScale(d) + ")"; });
 
      // Draw the lines
-    svg
-      .selectAll(".lines")
-      .data(data)
-      .enter()
-      .append("path")
-      .attr("class", "lines")
-      .attr("d",  path)
-      .attr("fill", "none")
-      .attr("stroke", "#69b3a2")
-      .attr("opacity", 0.5);
-    
-
+     svg
+     .selectAll(".lines")
+     .data(data)
+     .enter()
+     .append("path")
+     .attr("class", "lines")
+     .attr("d", (d) => d3.line()(axisCombination.map(function(p) {return ([xScale(p), yScale[p](d[p])]);})))
+     .attr("fill", "none")
+     .attr("stroke", "#69b3a2")
+     .attr("opacity", 0.5);
 
     axisGroups
       .each(function(d) { d3.select(this).call(d3.axisLeft().scale(yScale[d])); })
@@ -215,22 +200,15 @@ function createParallelCoordinates(data) {
       .call(
         d3.drag()
           .on("start", function (event, d) {
-            //Remove the mean point
-            pointMeans
-              .filter(function (circle) {
-                return circle === d;
-              })
-              .attr("opacity", 0);
+            //Occulte the mean point
+            d3.selectAll(".meanPoint").attr("opacity", 0);
 
             // Store the original position for reference
             d3.select(this).attr("data-original-x", d3.select(this).attr("transform"));
           })
           .on("drag", function (event, d) {
             const x = event.x;
-            const originalX = d3.select(this).attr("data-original-x");
             const draggedAxis = d;
-
-            //console.log("axis:", draggedAxis);
 
             // Update the position of the axis label
             d3.select(this).attr("transform", `translate(${x})`);
@@ -240,61 +218,47 @@ function createParallelCoordinates(data) {
               return Math.abs(xScale(b) - x) < Math.abs(xScale(a) - x) ? b : a;
             });
 
-            //console.log("closest:", closestAxis);
+            // Update the positions of the axes (only visually)
+            d3.select(this)
+              .transition()
+              .duration(250)
+              .attr("transform", `translate(${xScale(closestAxis)}, 0)`);
+            
+            //console.log(closestAxisElement);
 
             // Update the order of dimensions
             const oldIndex = axisCombination.indexOf(draggedAxis);
             const newIndex = axisCombination.indexOf(closestAxis);
 
-            //console.log("Old Index:", oldIndex);
-            //console.log("New Index:", newIndex);
-
             if (oldIndex !== newIndex) {
               axisCombination[oldIndex] = closestAxis;
               axisCombination[newIndex] = draggedAxis;
 
-              // Redraw the axis labels and data lines
-              axisGroups
-                .selectAll(".axis")
-                .transition()
-                .duration(500)
-                .attr("transform", function (d) {
-                  const newIndex = axisCombination.indexOf(d);
-                  console.log("olaaa");
-                  return "translate(" + (margin.left - newIndex * spaceBetweenAxes) + ")";
-                });
-
-              // Clear the old lines by removing them
-              svg.selectAll(".lines").remove();
+              axisCombination.forEach((attr) => {
+                meanValues[attr] = d3.mean(data, (d) => +d[attr]);
+              });
 
               // Redraw the data lines with the new order of dimensions
               svg
                 .selectAll(".lines")
                 .data(data)
-                .enter()
-                .append("path")
-                .attr("class", "lines")
-                .attr("d", path)
-                .attr("fill", "none")
-                .attr("stroke", "#69b3a2")
-                .attr("opacity", 0.5);
+                .transition()
+                .attr("d", (d) => d3.line()(axisCombination.map(function(p) {return ([xScale(p), yScale[p](d[p])]);})))
           }
         }) 
         .on("end", function(event, d) {
           //Ensure the final position of the attached point matches the axis label's position
           const x = event.x; // Extract x-coordinate
           const draggedAxis = d;
-          pointMeans
-            .filter(function(circle) {
-              return circle === draggedAxis;
-            })
-            .attr("cx", x) // Set the x-coordinate to match the final position
-            .attr("cy", yScale[draggedAxis](meanValues[draggedAxis])) // Update the y-coordinate based on the mean value for the axis
+
+          d3.selectAll(".meanPoint")
+            .attr("cx",  function (d) { return xScale(d) })
+            .attr("cy", function (d) { return yScale[d](meanValues[d]) })
             .attr("opacity", 1);
         })
       );
 
 
-  }
+}
 
 function createParallelSets(data) {}
