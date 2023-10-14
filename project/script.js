@@ -64,16 +64,17 @@ function createBarChart(data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  modelsPerBrand = d3.rollup(
-    data,
-    (v) => v.length,
-    (d) => d.Brand
-  );
-  const modelsPerBrandArray = Array.from(modelsPerBrand, ([brand, count]) => ({
-    brand,
-    count,
-  }));
-  modelsPerBrandArray.sort((a, b) => b.count - a.count);
+    modelsPerBrand = d3.rollup(data, 
+      (v) => ({
+          Count: v.length,
+          avgSeats: d3.mean(v, (d) => d.Seats)
+      }), 
+      (d) => d.Brand);
+
+  const modelsPerBrandArray = Array.from(modelsPerBrand, 
+      ([Brand, {avgSeats, Count}]) => ({ Brand, avgSeats, Count }));
+
+  modelsPerBrandArray.sort((a, b) =>  d3.descending(a.Brand, b.Brand));
 
   // Create scales for x and y
   const xScale = d3
@@ -85,18 +86,13 @@ function createBarChart(data) {
   const yScale = d3.scaleLinear().domain([0, 15]).range([height, 0]);
 
   // Create a color scale for the bars based on the seats data
-  //const colorScale = d3.scaleOrdinal()
-  //  .domain([4, 7])
-  //  .range(d3.schemeCategory10); // change
-  const colorScale = d3
-    .scaleSequential(d3.interpolateViridis) // You can choose a different color scheme
-    .domain([0, modelsPerBrandArray]);
+  const colorScale = d3.scaleSequential([4, 7], d3.interpolateBlues); // You can choose a different color scheme
 
   svg
     .append("text")
     .attr("class", "total-percentage-label")
-    .attr("x", 0)
-    .attr("y", -5)
+    .attr("x", width - margin.right - 23)
+    .attr("y", 150)
     .attr("text-anchor", "middle")
     .text("100% models");
 
@@ -107,11 +103,11 @@ function createBarChart(data) {
     .enter()
     .append("rect")
     .attr("class", "bar")
-    .attr("x", (d) => xScale(d.brand))
-    .attr("y", (d) => yScale(d.count))
+    .attr("x", d => xScale(d.Brand))
+    .attr("y", v => yScale(v.Count))
     .attr("width", xScale.bandwidth())
-    .attr("height", (d) => height - yScale(d.count))
-    .attr("fill", (d) => colorScale(d.Seats));
+    .attr("height", v => height - yScale(v.Count))
+    .attr("fill", v => colorScale(v.avgSeats));
 
   // Append x and y axes to the chart
   svg
@@ -125,64 +121,61 @@ function createBarChart(data) {
 
   svg.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale).ticks(5)); // change ?
 
-  // Create a color scale legend on the left underside
-  const legend = svg
-    .append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(0, ${height + 80})`);
-
-  const legendGradient = d3
-    .scaleLinear()
-    .domain([0, d3.max(modelsPerBrandArray, (d) => d.Seats)])
-    .range([height, 0]);
-
-  legend
-    .append("rect")
+  // Create a gradient for the color legend
+  linearGradient = svg.append("g")
+    .append("linearGradient")
+    .attr("id", "linearGradient")
+    .attr("x1", "0%")
+    .attr("x2", "100%");
+    
+  const numStops = 3;
+  const stopPositions = d3.range(numStops).map(d => d / (numStops - 1));
+  linearGradient.selectAll("stop")
+      .data(stopPositions)
+      .enter().append("stop")
+      .attr("offset", d => d * 100 + "%")
+      .attr("stop-color", d => colorScale(d * 3 + 4)); 
+    
+  svg.append("rect")
     .attr("width", 200)
-    .attr("height", 20)
-    .style("fill", "url(#legendGradient)");
-
-  legend
-    .append("text")
+    .attr("height", 10)
+    .style("fill", "url(#linearGradient)")
+    .attr("transform", `translate(0, ${height + 80})`);
+    
+  svg.append("text")
     .attr("x", 100)
     .attr("y", -10)
     //size of letter need to be lower
     .attr("font-size", "10px")
     .attr("dy", "0.5em")
     .attr("text-anchor", "middle")
-    .text("Seats Counter");
+    .text("Seats Counter")
+    .attr("transform", `translate(0, ${height + 80})`);
+  
+  // Add ticks and labels
+  const ticks = [4, 5, 6, 7]; // Specify the values for which you want ticks
+  const tickXPositions = ticks.map(value => (value - 4) / 3 * 200 - 2);
+  const tickLabels = ['4', '5', '6', '7']; // Labels corresponding to the ticks
+  const tickHeight = 10; // Height of the tick lines
 
-  // Create a gradient for the color legend
-  svg
-    .append("defs")
-    .append("linearGradient")
-    .attr("id", "legendGradient")
-    .attr("x1", "0%")
-    .attr("x2", "100%")
-    //.attr("y1", "0%")
-    //.attr("y2", "100%")
-    .selectAll("stop")
-    .data(d3.range(0, 1.1, 0.1)) // Adjust the range as needed
-    .enter()
-    .append("stop")
-    .attr("offset", (d) => d * 100 + "%")
-    .attr("stop-color", (d) =>
-      colorScale(d3.max(modelsPerBrandArray, (d) => d.Seats) * d)
-    );
-
-  // Add labels for the gradient
-  legend
-    .selectAll("text.label")
-    .data(d3.range(0, 1.1, 0.1)) // Adjust the range as needed
-    .enter()
-    .append("text")
-    .attr("class", "label")
-    .attr("x", (d) =>
-      legendGradient(d * d3.max(modelsPerBrandArray, (d) => d.Seats))
-    )
-    .attr("y", 30)
-    .attr("dy", "0.5em")
-    .text((d) => Math.round(d * d3.max(modelsPerBrandArray, (d) => d.Seats)));
+  // Create ticks and labels
+  for (let i = 0; i < ticks.length; i++) {
+    /*
+    svg.append("line")
+      .attr("x1", tickXPositions[i] + 2)
+      .attr("x2", tickXPositions[i] + 2)
+      .attr("y1", height + 90 - tickHeight)
+      .attr("y2", height + 90)
+      .style("stroke", "black")
+      .style("stroke-width", 1);
+    */
+    svg.append("text")
+      .attr("x", tickXPositions[i])
+      .attr("y", tickHeight + height + 90)
+      .text(tickLabels[i])
+      .style("font-size", "10px")
+      .style("fill", "black");
+  }
 }
 
 function createParallelCoordinates(data) {
