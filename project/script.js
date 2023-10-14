@@ -236,7 +236,6 @@ function createParallelCoordinates(data) {
     minValues[attr] = d3.min(data, (d) => +d[attr]);
   });
 
-
   // Draw the lines
   svg
     .selectAll(".lines")
@@ -253,7 +252,7 @@ function createParallelCoordinates(data) {
     )
     .attr("fill", "none")
     .attr("stroke", "#69b3a2")
-    .attr("opacity", 0.5);
+    .attr("opacity", 0.7);
   // Draw the axis
   const axisGroups = svg
     .selectAll(".axis")
@@ -264,7 +263,6 @@ function createParallelCoordinates(data) {
     .attr("transform", function (d) {
       return "translate(" + xScale(d) + ")";
     });
-
 
   axisGroups
     .each(function (d) {
@@ -426,7 +424,27 @@ function createParallelCoordinates(data) {
 
         d3.select(this).attr("transform", `translate(0, ${y})`).attr("y", y);
 
-        maxValues[d] = yScale[d].invert(y);
+        const axis = d;
+        // Redraw the data lines with the new filter
+        svg
+          .selectAll(".lines")
+          .data(data)
+          .filter(function (a) {
+            return yScale[axis](a[axis]) <= y;
+          })
+          .attr("stroke", "grey")
+          .attr("opacity", 0.1);
+
+        svg
+          .selectAll(".lines")
+          .data(data)
+          .filter(function (a) {
+            return yScale[axis](a[axis]) >= y;
+          })
+          .attr("stroke", "#69b3a2")
+          .attr("opacity", 0.7);
+
+        //maxValues[d] = yScale[d].invert(y);
       })
       .on("end", function (event, d) {})
   );
@@ -448,7 +466,29 @@ function createParallelCoordinates(data) {
           .attr("transform", `translate(0, ${y - height})`)
           .attr("y", y);
 
-        minValues[d] = yScale[d].invert(y);
+        const axis = d;
+
+        // Redraw the data lines with the new filter
+        svg
+          .selectAll(".lines")
+          .data(data)
+          .filter(function (a) {
+            if (yScale[axis](a[axis]) < y) console.log(a);
+            return yScale[axis](a[axis]) >= y;
+          })
+          .attr("stroke", "grey")
+          .attr("opacity", 0.1);
+
+        svg
+          .selectAll(".lines")
+          .data(data)
+          .filter(function (a) {
+            return yScale[axis](a[axis]) <= y;
+          })
+          .attr("stroke", "#69b3a2")
+          .attr("opacity", 0.7);
+
+        //minValues[d] = yScale[d].invert(y);
       })
       .on("end", function (event, d) {})
   );
