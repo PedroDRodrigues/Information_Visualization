@@ -55,7 +55,7 @@ function createBarChart(data) {
         .select("#barChart")
         .append("svg")
         .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
+        .attr("height", height + margin.top + margin.bottom + 50)
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
       
@@ -75,9 +75,12 @@ function createBarChart(data) {
         .range([height, 0]);
 
     // Create a color scale for the bars based on the seats data
-    const colorScale = d3.scaleOrdinal()
-        .domain([4, 7])
-        .range(d3.schemeCategory10); // change
+    //const colorScale = d3.scaleOrdinal()
+      //  .domain([4, 7])
+      //  .range(d3.schemeCategory10); // change
+    const colorScale = d3.scaleSequential(d3.interpolateViridis) // You can choose a different color scheme
+      .domain([0, modelsPerBrandArray]);
+    
 
     svg.append("text")
         .attr("class", "total-percentage-label")
@@ -112,7 +115,56 @@ function createBarChart(data) {
     svg
         .append("g")
         .attr("class", "y-axis")
-        .call(d3.axisLeft(yScale).ticks(3)); // change ?
+        .call(d3.axisLeft(yScale).ticks(5)); // change ?
+
+    // Create a color scale legend on the left underside
+    const legend = svg
+        .append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(0, ${height + 80})`);
+
+    const legendGradient = d3.scaleLinear()
+        .domain([0, d3.max(modelsPerBrandArray, d => d.Seats)])
+        .range([height, 0]);
+
+    legend.append("rect")
+        .attr("width", 200)
+        .attr("height", 20)
+        .style("fill", "url(#legendGradient)");
+
+    legend.append("text")
+        .attr("x", 100)
+        .attr("y", -10)
+        //size of letter need to be lower
+        .attr("font-size", "10px")
+        .attr("dy", "0.5em")
+        .attr("text-anchor", "middle")
+        .text("Seats Counter");
+
+    // Create a gradient for the color legend
+    svg.append("defs")
+        .append("linearGradient")
+        .attr("id", "legendGradient")
+        .attr("x1", "0%")
+        .attr("x2", "100%")
+        //.attr("y1", "0%")
+        //.attr("y2", "100%")
+        .selectAll("stop")
+        .data(d3.range(0, 1.1, 0.1)) // Adjust the range as needed
+        .enter().append("stop")
+        .attr("offset", d => d * 100 + "%")
+        .attr("stop-color", d => colorScale(d3.max(modelsPerBrandArray, d => d.Seats) * d));
+
+    // Add labels for the gradient
+    legend.selectAll("text.label")
+        .data(d3.range(0, 1.1, 0.1)) // Adjust the range as needed
+        .enter().append("text")
+        .attr("class", "label")
+        .attr("x", d => legendGradient(d * d3.max(modelsPerBrandArray, d => d.Seats)))
+        .attr("y", 30)
+        .attr("dy", "0.5em")
+        .text(d => Math.round(d * d3.max(modelsPerBrandArray, d => d.Seats)));
+
 }
 
 function createParallelCoordinates(data) {
@@ -276,4 +328,150 @@ function createParallelCoordinates(data) {
 
 }
 
-function createParallelSets(data) {}
+function createParallelSets(data) {
+  //esta maneira aqui acaba por ser mais simples e mais facil de perceber
+  //porque damos import do sankey.js e depois é so usar as funçoes
+  //o problema e que o import nao esta bem dado logo nao reconhce algumas cenas
+  /*const d3sankey = require('./sankey');
+  const sankey = d3sankey.sankey();
+
+  const {nodes, links} = sankey(data);
+  
+  const svg = d3
+    .select("#parallelSets")
+    .append("svg")
+    .attr("width", window.innerWidth)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Create a color scale for the links
+  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+  // Draw the links
+  svg
+    .selectAll(".link")
+    .data(links)
+    .enter()
+    .append("path")
+    .attr("class", "link")
+    .attr("d", d3sankey.sankeyLinkHorizontal())
+    .style("stroke", (d) => colorScale(d.source.name))
+    .style("stroke-width", (d) => Math.max(1, d.width))
+    .style("fill", "none");
+
+  // Draw the nodes
+  svg
+    .selectAll(".node")
+    .data(nodes)
+    .enter()
+    .append("g")
+    .attr("class", "node")
+    .attr("transform", (d) => `translate(${d.x},${d.y})`)
+    .call(
+      d3
+        .drag()
+        .subject((d) => d)
+        .on("start", () => {
+          d3.event.sourceEvent.stopPropagation();
+        })
+    );
+
+  // Add rectangles to the nodes
+  svg
+    .selectAll(".node")
+    .append("rect")
+    .attr("height", (d) => d.y1 - d.y0)
+    .attr("width", sankey.nodeWidth())
+    .style("fill", "#69b3a2");
+
+  // Add text labels to the nodes
+  svg
+    .selectAll(".node")
+    .append("text")
+    .attr("x", -6)
+    .attr("y", (d) => (d.y1 - d.y0) / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", "end")
+    .text((d) => d.name)
+    .style("font-size", "10px");
+  */
+
+
+
+
+  /// ESTA ERA OUTRA MANEIRA DE SE FAZER MAS AINDA TENHO DE VER QUAL A MELHOR
+  /*const svg = d3
+    .select("#parallelSets")
+    .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Create a Sankey diagram generator
+  const sankey = d3.sankey().nodeWidth(15).nodePadding(10).size([width, height]);
+
+  // Generate the Sankey diagram layout from the data
+  const { nodes, links } = sankey({ nodes: [], links: data });
+
+  // Create a color scale for the links
+  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+  // Draw the links
+  svg
+    .selectAll(".link")
+    .data(links)
+    .enter()
+    .append("path")
+    .attr("class", "link")
+    .attr("d", d3.sankeyLinkHorizontal())
+    .style("stroke", (d) => colorScale(d.source.name))
+    .style("stroke-width", (d) => Math.max(1, d.width))
+    .style("fill", "none");
+
+  // Draw the nodes
+  svg
+    .selectAll(".node")
+    .data(nodes)
+    .enter()
+    .append("g")
+    .attr("class", "node")
+    .attr("transform", (d) => `translate(${d.x},${d.y})`)
+    .call(
+      d3
+        .drag()
+        .subject((d) => d)
+        .on("start", () => {
+          d3.event.sourceEvent.stopPropagation();
+        })
+    );
+
+  // Add rectangles to the nodes
+  svg
+    .selectAll(".node")
+    .append("rect")
+    .attr("height", (d) => d.y1 - d.y0)
+    .attr("width", sankey.nodeWidth())
+    .style("fill", "#69b3a2");
+
+  // Add text labels to the nodes
+  svg
+    .selectAll(".node")
+    .append("text")
+    .attr("x", -6)
+    .attr("y", (d) => (d.y1 - d.y0) / 2)
+    .attr("dy", "0.35em")
+    .attr("text-anchor", "end")
+    .text((d) => d.name)
+    .style("font-size", "10px");
+
+  // Add labels for each link
+  svg
+    .selectAll(".link")
+    .append("text")
+    .attr("x", (d) => (d.source.x + d.target.x) / 2)
+    .attr("y", (d) => (d.y1 + d.y0) / 2)
+    .text((d) => d.value)
+    .style("font-size", "12px");*/
+}
