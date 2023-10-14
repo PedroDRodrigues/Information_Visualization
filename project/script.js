@@ -236,16 +236,6 @@ function createParallelCoordinates(data) {
     minValues[attr] = d3.min(data, (d) => +d[attr]);
   });
 
-  // Draw the axis
-  const axisGroups = svg
-    .selectAll(".axis")
-    .data(axisCombination)
-    .enter()
-    .append("g")
-    .attr("class", "axisGroup")
-    .attr("transform", function (d) {
-      return "translate(" + xScale(d) + ")";
-    });
 
   // Draw the lines
   svg
@@ -264,6 +254,17 @@ function createParallelCoordinates(data) {
     .attr("fill", "none")
     .attr("stroke", "#69b3a2")
     .attr("opacity", 0.5);
+  // Draw the axis
+  const axisGroups = svg
+    .selectAll(".axis")
+    .data(axisCombination)
+    .enter()
+    .append("g")
+    .attr("class", "axisGroup")
+    .attr("transform", function (d) {
+      return "translate(" + xScale(d) + ")";
+    });
+
 
   axisGroups
     .each(function (d) {
@@ -360,15 +361,12 @@ function createParallelCoordinates(data) {
           .duration(250)
           .attr("transform", `translate(${xScale(closestAxis)}, 0)`);
 
-        console.log("closest: ", closestAxis);
-        console.log("dragged: ", draggedAxis);
-
         d3.selectAll(".axisGroup")
           .filter(function (axis) {
             return axis == closestAxis;
           })
           .transition()
-          .duration(150)
+          .duration(100)
           .attr("transform", `translate(${xScale(draggedAxis)}, 0)`);
 
         // Update the order of dimensions
