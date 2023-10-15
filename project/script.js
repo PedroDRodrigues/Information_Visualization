@@ -64,22 +64,22 @@ function createBarChart(data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    modelsPerBrand = d3.rollup(data, 
-      (v) => ({
-          Count: v.length,
-          avgSeats: d3.mean(v, (d) => d.Seats)
-      }), 
-      (d) => d.Brand);
+  const modelsPerBrand = d3.rollup(data, 
+    (v) => ({
+        Count: v.length,
+        avgSeats: d3.mean(v, (d) => d.Seats)
+    }), 
+    (d) => d.Brand);
 
   const modelsPerBrandArray = Array.from(modelsPerBrand, 
       ([Brand, {avgSeats, Count}]) => ({ Brand, avgSeats, Count }));
 
-  modelsPerBrandArray.sort((a, b) =>  d3.descending(a.Brand, b.Brand));
+  modelsPerBrandArray.sort((a, b) =>  b.Count - a.Count);
 
   // Create scales for x and y
   const xScale = d3
     .scaleBand()
-    .domain(data.map((d) => d.Brand))
+    .domain(modelsPerBrandArray.map((d) => d.Brand))
     .range([0, width])
     .padding(0.15);
 
@@ -107,7 +107,10 @@ function createBarChart(data) {
     .attr("y", v => yScale(v.Count))
     .attr("width", xScale.bandwidth())
     .attr("height", v => height - yScale(v.Count))
-    .attr("fill", v => colorScale(v.avgSeats));
+    .attr("fill", v => colorScale(v.avgSeats))
+    .on("click", function (d) {
+      updateHighlightedBrand(d.target.__data__);
+    });
 
   // Append x and y axes to the chart
   svg
@@ -192,7 +195,7 @@ function createParallelCoordinates(data) {
     .select("#parallelCoords")
     .append("svg")
     .attr("width", window.innerWidth)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("height", height * 2 + margin.top + margin.bottom)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -208,7 +211,7 @@ function createParallelCoordinates(data) {
     yScale[attr] = d3
       .scaleLinear()
       .domain(d3.extent(data, (d) => +d[attr]))
-      .range([height, 0]);
+      .range([height  * 2, 0]);
   });
 
   // Calculate the mean values of each attribute
@@ -263,7 +266,7 @@ function createParallelCoordinates(data) {
     })
     .append("text")
     .style("text-anchor", "middle")
-    .attr("y", height - margin.top + margin.bottom - 10)
+    .attr("y", height * 2 - margin.top + margin.bottom - 10)
     .text(function (d) {
       return d;
     })
@@ -453,10 +456,10 @@ function createParallelCoordinates(data) {
         var y = event.y;
 
         y > 0 ? y : (y = 0);
-        y > height ? (y = height) : (y = y);
+        y > height * 2 ? (y = height * 2) : (y = y);
 
         d3.select(this)
-          .attr("transform", `translate(0, ${y - height})`)
+          .attr("transform", `translate(0, ${y - height * 2})`)
           .attr("y", y);
 
         const axis = d;
