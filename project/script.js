@@ -21,6 +21,13 @@ const axisCombination = [
   "TopSpeed_KmH",
 ];
 
+const axisCombinationSets = [
+  "RapidCharge",
+  "BodyStyle",
+  "Segment",
+  "PowerTrain",
+];
+
 const spaceBetweenAxes = width / 6;
 
 // This function initiates the dashboard and loads the csv data.
@@ -491,145 +498,96 @@ function createParallelCoordinates(data) {
 }
 
 function createParallelSets(data) {
-  //esta maneira aqui acaba por ser mais simples e mais facil de perceber
-  //porque damos import do sankey.js e depois é so usar as funçoes
-  //o problema e que o import nao esta bem dado logo nao reconhce algumas cenas
-  /*const d3sankey = require('./sankey');
-  const sankey = d3sankey.sankey();
 
-  const {nodes, links} = sankey(data);
-  
-  const svg = d3
+    const svg = d3
     .select("#parallelSets")
     .append("svg")
     .attr("width", window.innerWidth)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("height", height * 2 + margin.top + margin.bottom)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Create a color scale for the links
-  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+    // Define scales for each dimension
+    const xScale = d3
+      .scalePoint()
+      .range([0, width])
+      .padding(0.15)
+      .domain(axisCombinationSets);
 
-  // Draw the links
-  svg
-    .selectAll(".link")
-    .data(links)
-    .enter()
-    .append("path")
-    .attr("class", "link")
-    .attr("d", d3sankey.sankeyLinkHorizontal())
-    .style("stroke", (d) => colorScale(d.source.name))
-    .style("stroke-width", (d) => Math.max(1, d.width))
-    .style("fill", "none");
+    // Create a function to draw the parallel set lines
+    const path = d => {
+      const pathCommands = axisCombinationSets.map(dim => {
+        const x = xScale(dim);
+        if (x === undefined) {
+          return ''; // Skip undefined values
+        }
+        return `${x},${axisCombinationSets.indexOf(dim) * 20}`;
+      });
+    
+      return `M${pathCommands.join('L')}`;
+    }
+    
+    // Draw the parallel set chart
+    svg.selectAll("path")
+      .data(data)
+      .enter()
+      .append("path")
+      .attr("d", path)
+      .style("fill", "none")
+      .style("stroke", "steelblue");
 
-  // Draw the nodes
-  svg
-    .selectAll(".node")
-    .data(nodes)
-    .enter()
-    .append("g")
-    .attr("class", "node")
-    .attr("transform", (d) => `translate(${d.x},${d.y})`)
-    .call(
-      d3
-        .drag()
-        .subject((d) => d)
-        .on("start", () => {
-          d3.event.sourceEvent.stopPropagation();
-        })
-    );
+    const axisGroups = svg
+      .selectAll(".axis")
+      .data(axisCombinationSets)
+      .enter()
+      .append("g")
+      .attr("class", "axisGroup")
+      .attr("transform", function (d) {
+        return "translate(" + xScale(d) + ")";
+      });
 
-  // Add rectangles to the nodes
-  svg
-    .selectAll(".node")
-    .append("rect")
-    .attr("height", (d) => d.y1 - d.y0)
-    .attr("width", sankey.nodeWidth())
-    .style("fill", "#69b3a2");
+    axisGroups
+      .each(function (d) {
+        d3.select(this).call(d3.axisLeft().scale(xScale));
+      })
+      .append("text")
+      .style("text-anchor", "middle")
+      .attr("y", height * 2 - margin.top + margin.bottom - 10)
+      .text(function (d) {
+        return d;
+      })
+      .style("fill", "black");
 
-  // Add text labels to the nodes
-  svg
-    .selectAll(".node")
-    .append("text")
-    .attr("x", -6)
-    .attr("y", (d) => (d.y1 - d.y0) / 2)
-    .attr("dy", "0.35em")
-    .attr("text-anchor", "end")
-    .text((d) => d.name)
-    .style("font-size", "10px");
-  */
-  /// ESTA ERA OUTRA MANEIRA DE SE FAZER MAS AINDA TENHO DE VER QUAL A MELHOR
-  /*const svg = d3
-    .select("#parallelSets")
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    // Create the markers for the filters
+    const maxMarkerGroups = axisGroups
+      .append("g")
+      .attr("class", "maxValueMarkers");
 
-  // Create a Sankey diagram generator
-  const sankey = d3.sankey().nodeWidth(15).nodePadding(10).size([width, height]);
+    // Add a max value marker to each axis
+    maxMarkerGroups
+      .append("rect")
+      .attr("type", "maxValue-marker")
+      .attr("width", 10)
+      .attr("height", 5)
+      .attr("x", -5)
+      .attr("y", (d) => xScale(d) - 5)
+      .attr("fill", "black")
+      .attr("stroke", "black");
 
-  // Generate the Sankey diagram layout from the data
-  const { nodes, links } = sankey({ nodes: [], links: data });
+    // Create the markers for the filters
+    const minMarkerGroups = axisGroups
+      .append("g")
+      .attr("class", "minValueMarkers");
 
-  // Create a color scale for the links
-  const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
-
-  // Draw the links
-  svg
-    .selectAll(".link")
-    .data(links)
-    .enter()
-    .append("path")
-    .attr("class", "link")
-    .attr("d", d3.sankeyLinkHorizontal())
-    .style("stroke", (d) => colorScale(d.source.name))
-    .style("stroke-width", (d) => Math.max(1, d.width))
-    .style("fill", "none");
-
-  // Draw the nodes
-  svg
-    .selectAll(".node")
-    .data(nodes)
-    .enter()
-    .append("g")
-    .attr("class", "node")
-    .attr("transform", (d) => `translate(${d.x},${d.y})`)
-    .call(
-      d3
-        .drag()
-        .subject((d) => d)
-        .on("start", () => {
-          d3.event.sourceEvent.stopPropagation();
-        })
-    );
-
-  // Add rectangles to the nodes
-  svg
-    .selectAll(".node")
-    .append("rect")
-    .attr("height", (d) => d.y1 - d.y0)
-    .attr("width", sankey.nodeWidth())
-    .style("fill", "#69b3a2");
-
-  // Add text labels to the nodes
-  svg
-    .selectAll(".node")
-    .append("text")
-    .attr("x", -6)
-    .attr("y", (d) => (d.y1 - d.y0) / 2)
-    .attr("dy", "0.35em")
-    .attr("text-anchor", "end")
-    .text((d) => d.name)
-    .style("font-size", "10px");
-
-  // Add labels for each link
-  svg
-    .selectAll(".link")
-    .append("text")
-    .attr("x", (d) => (d.source.x + d.target.x) / 2)
-    .attr("y", (d) => (d.y1 + d.y0) / 2)
-    .text((d) => d.value)
-    .style("font-size", "12px");*/
+    // Add a min value marker to each axis
+    minMarkerGroups
+      .append("rect")
+      .attr("type", "minValue-marker")
+      .attr("width", 10)
+      .attr("height", 5)
+      .attr("x", -5)
+      .attr("y", (d) => xScale(d) + 0.5)
+      .attr("fill", "black")
+      .attr("stroke", "black");
 }
+
