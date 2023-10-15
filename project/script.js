@@ -428,7 +428,7 @@ function createParallelCoordinates(data) {
           .filter(function (a) {
             return yScale[axis](a[axis]) <= y;
           })
-          .attr("stroke", "grey")
+          //.attr("stroke", "grey")
           .attr("opacity", 0.1);
 
         svg
@@ -437,7 +437,7 @@ function createParallelCoordinates(data) {
           .filter(function (a) {
             return yScale[axis](a[axis]) >= y;
           })
-          .attr("stroke", "#69b3a2")
+          //.attr("stroke", "#69b3a2")
           .attr("opacity", 0.7);
 
         //maxValues[d] = yScale[d].invert(y);
@@ -472,7 +472,7 @@ function createParallelCoordinates(data) {
             if (yScale[axis](a[axis]) < y) console.log(a);
             return yScale[axis](a[axis]) >= y;
           })
-          .attr("stroke", "grey")
+          //.attr("stroke", "grey")
           .attr("opacity", 0.1);
 
         svg
@@ -481,7 +481,7 @@ function createParallelCoordinates(data) {
           .filter(function (a) {
             return yScale[axis](a[axis]) <= y;
           })
-          .attr("stroke", "#69b3a2")
+          //.attr("stroke", "#69b3a2")
           .attr("opacity", 0.7);
 
         //minValues[d] = yScale[d].invert(y);
