@@ -43,7 +43,7 @@ function startDashboard() {
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      createParallelSets(data);
+      //createParallelSets(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
@@ -93,7 +93,7 @@ function createBarChart(data) {
   const yScale = d3.scaleLinear().domain([0, 15]).range([height, 0]);
 
   // Create a color scale for the bars based on the seats data
-  const colorScale = d3.scaleSequential([4, 7], d3.interpolateBlues); // You can choose a different color scheme
+  const colorScale = d3.scaleSequential([4, 7], d3.interpolateGreens); // You can choose a different color scheme
 
   svg
     .append("text")
@@ -304,7 +304,7 @@ function createParallelCoordinates(data) {
   // Add a max value marker to each axis
   maxMarkerGroups
     .append("rect")
-    .attr("type", "maxValue-marker")
+    .attr("class", "maxValue-marker")
     .attr("width", 10)
     .attr("height", 5)
     .attr("x", -5)
@@ -320,7 +320,7 @@ function createParallelCoordinates(data) {
   // Add a min value marker to each axis
   minMarkerGroups
     .append("rect")
-    .attr("type", "minValue-marker")
+    .attr("class", "minValue-marker")
     .attr("width", 10)
     .attr("height", 5)
     .attr("x", -5)
@@ -428,28 +428,14 @@ function createParallelCoordinates(data) {
         d3.select(this).attr("transform", `translate(0, ${y})`).attr("y", y);
 
         const axis = d;
-        // Redraw the data lines with the new filter
-        svg
-          .selectAll(".lines")
-          .data(data)
-          .filter(function (a) {
-            return yScale[axis](a[axis]) <= y;
-          })
-          //.attr("stroke", "grey")
-          .attr("opacity", 0.1);
-
-        svg
-          .selectAll(".lines")
-          .data(data)
-          .filter(function (a) {
-            return yScale[axis](a[axis]) >= y;
-          })
-          //.attr("stroke", "#69b3a2")
-          .attr("opacity", 0.7);
-
+        //console.log(d3.selectAll(".maxValueMarkers").attr("y", y))
+        updateParallelCoordsLines(data);
         //maxValues[d] = yScale[d].invert(y);
       })
-      .on("end", function (event, d) {})
+      .on("end", function (event, d) { 
+        lines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
+        updateBarChart(lines.map(d => d.__data__));
+    })
   );
 
   minMarkerGroups.call(
@@ -493,7 +479,10 @@ function createParallelCoordinates(data) {
 
         //minValues[d] = yScale[d].invert(y);
       })
-      .on("end", function (event, d) {})
+      .on("end", function (event, d) {
+        lines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
+        updateBarChart(lines.map(d => d.__data__));
+      })
   );
 }
 
