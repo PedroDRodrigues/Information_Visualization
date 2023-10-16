@@ -3,7 +3,7 @@ var globalData;
 var totalModels;
 
 // Define margins for the visualizations.
-const margin = { top: 20, right: 20, bottom: 50, left: 80 };
+const margin = { top: 20, right: 10, bottom: 50, left: 10 };
 
 // Calculate the width and height of the visualizations based on the margins.
 const width = 1200 - margin.left - margin.right;
@@ -115,6 +115,8 @@ function createBarChart(data) {
     .attr("width", xScale.bandwidth())
     .attr("height", v => height - yScale(v.Count))
     .attr("fill", v => colorScale(v.avgSeats))
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5)
     .on("click", function (d) {
       updateHighlightedBrand(d.target.__data__);
     });
@@ -189,6 +191,7 @@ function createBarChart(data) {
 }
 
 function createParallelCoordinates(data) {
+
   const selectedData = data.map((d) => {
     const selectedObj = {};
     axisCombination.forEach((attr) => {
@@ -196,6 +199,10 @@ function createParallelCoordinates(data) {
     });
     return selectedObj;
   });
+
+  const colorScale = d3.scaleSequential([4, 7], d3.interpolateGreens);
+  const color = colorScale(6);
+  console.log(color);
 
   // Select the #parallelCoords element and append an SVG to it
   const svg = d3
@@ -254,8 +261,9 @@ function createParallelCoordinates(data) {
       )
     )
     .attr("fill", "none")
-    .attr("stroke", "#69b3a2")
+    .attr("stroke", color)
     .attr("opacity", 0.7);
+
   // Draw the axis
   const axisGroups = svg
     .selectAll(".axis")
@@ -286,8 +294,8 @@ function createParallelCoordinates(data) {
     .enter()
     .append("circle")
     .attr("class", "meanPoint")
-    .attr("data-axis", (d) => d) // Set the data-axis attribute
-    .attr("r", 2)
+    .attr("data-axis", (d) => d)
+    .attr("r", 3)
     .attr("cx", function (d) {
       return xScale(d);
     })
