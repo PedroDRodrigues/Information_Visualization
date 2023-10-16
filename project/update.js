@@ -133,29 +133,40 @@ function updateParallelCoordsLines(data) {
         .range([height * 3, 0]);
     });
 
-    yValues = [] // instead of pushing y, push yScale(y) I THINK!
+    yMaxValues = []
     maxMarkerGroups = d3.selectAll(".maxValueMarkers");
     maxMarkerGroups.each(function () {
-        if (d3.select(this).attr("y") == null) { yValues.push(0); }
-        else { yValues.push(parseInt(d3.select(this).attr("y"))); }
+        if (d3.select(this).attr("y") == null) { yMaxValues.push(0); }
+        else { yMaxValues.push(parseInt(d3.select(this).attr("y"))); }
     });
+
+    yMinValues = []
+    minMarkerGroups = d3.selectAll(".minValueMarkers");
+    minMarkerGroups.each(function () {
+        if (d3.select(this).attr("y") == null) { yMinValues.push(240); }
+        else { yMinValues.push(parseInt(d3.select(this).attr("y"))); }
+    });
+
+    var currY;
     // Redraw the data lines with the new filter
     svg
         .selectAll(".lines")
         .filter(function (a) {
             for (let i=0; i < axisCombination.length; i++) {
-                if (yScale[axisCombination[i]](a[axisCombination[i]]) <= yScale[axisCombination[i]](yValues[i])) {}
-                else { return false; }
+                currY = yScale[axisCombination[i]](a[axisCombination[i]]);
+                if (currY >= yMinValues[i] || currY <= yMaxValues[i]) { return true; }
+                else { }
             }
-            return true;
+            return false;
         })
         .attr("opacity", 0.1);
-
+    
     svg
         .selectAll(".lines")
         .filter(function (a) {
             for (let i=0; i < axisCombination.length; i++) {
-                if (yScale[axisCombination[i]](a[axisCombination[i]]) >= yValues[i]) {}
+                currY = yScale[axisCombination[i]](a[axisCombination[i]]);
+                if (currY <= yMinValues[i] && currY >= yMaxValues[i]) {}
                 else { return false; }
             }
             return true;

@@ -426,7 +426,6 @@ function createParallelCoordinates(data) {
 
         d3.select(this).attr("transform", `translate(0, ${y})`).attr("y", y);
 
-        const axis = d;
         updateParallelCoordsLines(data);
       })
       .on("end", function (event, d) { 
@@ -452,28 +451,7 @@ function createParallelCoordinates(data) {
           .attr("transform", `translate(0, ${y - height * 3})`)
           .attr("y", y);
 
-        const axis = d;
-
-        // Redraw the data lines with the new filter
-        svg
-          .selectAll(".lines")
-          //.data(data)
-          .filter(function (a) {
-            return yScale[axis](a[axis]) >= y;
-          })
-          //.attr("stroke", "grey")
-          .attr("opacity", 0.1);
-
-        svg
-          .selectAll(".lines")
-          //.data(data)
-          .filter(function (a) {
-            return yScale[axis](a[axis]) <= y;
-          })
-          //.attr("stroke", "#69b3a2")
-          .attr("opacity", 0.7);
-
-        //minValues[d] = yScale[d].invert(y);
+        updateParallelCoordsLines(data);
       })
       .on("end", function (event, d) {
         lines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
