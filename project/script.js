@@ -11,7 +11,7 @@ const height = 150 - margin.top - margin.bottom;
 
 // Keep track of the positions of all axes
 const axisPositions = {};
-const axisCombination = [
+var axisCombination = [
   "AccelSec",
   "Battery_Pack Kwh",
   "Efficiency_WhKm",
@@ -43,7 +43,7 @@ function startDashboard() {
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      //createParallelSets(data);
+      createParallelSets(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
@@ -66,10 +66,10 @@ function createBarChart(data) {
   const svg = d3
     .select("#barChart")
     .append("svg")
-    .attr("width", width + margin.left + margin.right)
+    .attr("width", width + margin.left + margin.right + 50)
     .attr("height", height + margin.top + margin.bottom + 50)
     .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left+10},${margin.top})`);
 
   const modelsPerBrand = d3.rollup(data, 
     (v) => ({
@@ -99,7 +99,7 @@ function createBarChart(data) {
     .append("text")
     .attr("class", "total-percentage-label")
     .attr("x", width - margin.right - 23)
-    .attr("y", 150)
+    .attr("y", 180)
     .attr("text-anchor", "middle")
     .text("100% models");
 
@@ -152,11 +152,13 @@ function createBarChart(data) {
     .attr("width", 200)
     .attr("height", 10)
     .style("fill", "url(#linearGradient)")
-    .attr("transform", `translate(0, ${height + 80})`);
+    .attr("transform", `translate(0, ${height + 90})`)
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5);
     
   svg.append("text")
     .attr("x", 100)
-    .attr("y", -10)
+    .attr("y", 0)
     //size of letter need to be lower
     .attr("font-size", "10px")
     .attr("dy", "0.5em")
@@ -183,7 +185,7 @@ function createBarChart(data) {
     */
     svg.append("text")
       .attr("x", tickXPositions[i])
-      .attr("y", tickHeight + height + 90)
+      .attr("y", tickHeight + height + 100)
       .text(tickLabels[i])
       .style("font-size", "10px")
       .style("fill", "black");
@@ -202,7 +204,6 @@ function createParallelCoordinates(data) {
 
   const colorScale = d3.scaleSequential([4, 7], d3.interpolateGreens);
   const color = colorScale(6);
-  console.log(color);
 
   // Select the #parallelCoords element and append an SVG to it
   const svg = d3
@@ -233,6 +234,8 @@ function createParallelCoordinates(data) {
   axisCombination.forEach((attr) => {
     meanValues[attr] = d3.mean(data, (d) => +d[attr]);
   });
+
+  const filteredMeanValues = meanValues;
 
   // Calculate the max values of each attribute
   const maxValues = {};
@@ -286,6 +289,24 @@ function createParallelCoordinates(data) {
       return d;
     })
     .style("fill", "black");
+
+  // Create the means for each axis
+  const pointMeansFiltered = axisGroups
+    .select(".points")
+    .data(axisCombination)
+    .enter()
+    .append("circle")
+    .attr("class", "meanPointFiltered")
+    .attr("data-axis", (d) => d)
+    .attr("r", 3)
+    .attr("cx", function (d) {
+      return xScale(d);
+    })
+    .attr("cy", function (d) {
+      return yScale[d](filteredMeanValues[d]);
+    })
+    .attr("fill", colorScale(6))
+    .attr("stroke", "black");
 
   // Create the means for each axis
   const pointMeans = axisGroups
@@ -343,6 +364,7 @@ function createParallelCoordinates(data) {
       .on("start", function (event, d) {
         //Occulte the mean point
         d3.selectAll(".meanPoint").attr("opacity", 0);
+        d3.selectAll(".meanPointFiltered").attr("opacity", 0);
 
         // Store the original position for reference
         d3.select(this).attr(
@@ -381,9 +403,11 @@ function createParallelCoordinates(data) {
         const oldIndex = axisCombination.indexOf(draggedAxis);
         const newIndex = axisCombination.indexOf(closestAxis);
 
-        if (oldIndex !== newIndex) {
+        if (oldIndex != newIndex) {
           axisCombination[oldIndex] = closestAxis;
           axisCombination[newIndex] = draggedAxis;
+
+          console.log(axisCombination);
 
           axisCombination.forEach((attr) => {
             meanValues[attr] = d3.mean(data, (d) => +d[attr]);
@@ -413,6 +437,11 @@ function createParallelCoordinates(data) {
         const draggedAxis = d;
 
         d3.selectAll(".meanPoint")
+          .attr("cx", (a) => xScale(a))
+          .attr("cy", (a) => yScale[a](meanValues[a]))
+          .attr("opacity", 1);
+
+        d3.selectAll(".meanPointFiltered")
           .attr("cx", (a) => xScale(a))
           .attr("cy", (a) => yScale[a](meanValues[a]))
           .attr("opacity", 1);
