@@ -39,7 +39,7 @@ function startDashboard() {
 
       // Once the data is loaded successfully, store it in the globalData variable.
       globalData = data;
-      totalModels = data;
+      totalModels = data.length;
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
@@ -202,7 +202,7 @@ function createParallelCoordinates(data) {
     .select("#parallelCoords")
     .append("svg")
     .attr("width", window.innerWidth)
-    .attr("height", height * 2 + margin.top + margin.bottom)
+    .attr("height", height * 3 + margin.top + margin.bottom)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -218,7 +218,7 @@ function createParallelCoordinates(data) {
     yScale[attr] = d3
       .scaleLinear()
       .domain(d3.extent(data, (d) => +d[attr]))
-      .range([height  * 2, 0]);
+      .range([height * 3, 0]);
   });
 
   // Calculate the mean values of each attribute
@@ -273,7 +273,7 @@ function createParallelCoordinates(data) {
     })
     .append("text")
     .style("text-anchor", "middle")
-    .attr("y", height * 2 - margin.top + margin.bottom - 10)
+    .attr("y", height * 3 - margin.top + margin.bottom - 10)
     .text(function (d) {
       return d;
     })
@@ -333,7 +333,6 @@ function createParallelCoordinates(data) {
     d3
       .drag()
       .on("start", function (event, d) {
-        console.log("her");
         //Occulte the mean point
         d3.selectAll(".meanPoint").attr("opacity", 0);
 
@@ -423,14 +422,12 @@ function createParallelCoordinates(data) {
         var y = event.y;
 
         y < 0 ? (y = 0) : (y = y);
-        y > height ? (d.y = height) : (y = y);
+        y > height * 3 ? (y = height * 3) : (y = y);
 
         d3.select(this).attr("transform", `translate(0, ${y})`).attr("y", y);
 
         const axis = d;
-        //console.log(d3.selectAll(".maxValueMarkers").attr("y", y))
         updateParallelCoordsLines(data);
-        //maxValues[d] = yScale[d].invert(y);
       })
       .on("end", function (event, d) { 
         lines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
@@ -449,10 +446,10 @@ function createParallelCoordinates(data) {
         var y = event.y;
 
         y > 0 ? y : (y = 0);
-        y > height * 2 ? (y = height * 2) : (y = y);
+        y > height * 3 ? (y = height * 3) : (y = y);
 
         d3.select(this)
-          .attr("transform", `translate(0, ${y - height * 2})`)
+          .attr("transform", `translate(0, ${y - height * 3})`)
           .attr("y", y);
 
         const axis = d;
@@ -460,9 +457,8 @@ function createParallelCoordinates(data) {
         // Redraw the data lines with the new filter
         svg
           .selectAll(".lines")
-          .data(data)
+          //.data(data)
           .filter(function (a) {
-            if (yScale[axis](a[axis]) < y) console.log(a);
             return yScale[axis](a[axis]) >= y;
           })
           //.attr("stroke", "grey")
@@ -470,7 +466,7 @@ function createParallelCoordinates(data) {
 
         svg
           .selectAll(".lines")
-          .data(data)
+          //.data(data)
           .filter(function (a) {
             return yScale[axis](a[axis]) <= y;
           })
@@ -492,7 +488,7 @@ function createParallelSets(data) {
     .select("#parallelSets")
     .append("svg")
     .attr("width", window.innerWidth)
-    .attr("height", height * 2 + margin.top + margin.bottom)
+    .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 

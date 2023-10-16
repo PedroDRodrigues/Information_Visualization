@@ -46,6 +46,7 @@ function updateHighlightedBrand(clickedBar) {
 
 function updateBarChart(data) {
     // Select the SVG element of the bar chart
+    const currentModels = data.length
     const svg = d3.select("#barChart").select("svg").select("g");
 
     const modelsPerBrand = d3.rollup(data, 
@@ -110,6 +111,15 @@ function updateBarChart(data) {
         .selectAll("text")
         .attr("transform", "rotate(-90) translate(-10, -10)")
         .style("text-anchor", "end");
+
+    svg
+        .select(".total-percentage-label")
+        .transition()
+        .duration(500)
+        .attr("x", width - margin.right - 23)
+        .attr("y", 150)
+        .attr("text-anchor", "middle")
+        .text((currentModels/totalModels).toFixed(2) * 100 + "% models");
 }
 
 function updateParallelCoordsLines(data) {
@@ -120,7 +130,7 @@ function updateParallelCoordsLines(data) {
         yScale[attr] = d3
         .scaleLinear()
         .domain(d3.extent(data, (d) => +d[attr]))
-        .range([height  * 2, 0]);
+        .range([height * 3, 0]);
     });
 
     yValues = [] // instead of pushing y, push yScale(y) I THINK!
@@ -129,24 +139,20 @@ function updateParallelCoordsLines(data) {
         if (d3.select(this).attr("y") == null) { yValues.push(0); }
         else { yValues.push(parseInt(d3.select(this).attr("y"))); }
     });
-
     // Redraw the data lines with the new filter
     svg
         .selectAll(".lines")
-        //.data(data)
         .filter(function (a) {
             for (let i=0; i < axisCombination.length; i++) {
-                if (yScale[axisCombination[i]](a[axisCombination[i]]) <= yValues[i]) {console.log(yScale[axisCombination[1]](a[axisCombination[1]])); console.log(yValues[1])}
+                if (yScale[axisCombination[i]](a[axisCombination[i]]) <= yScale[axisCombination[i]](yValues[i])) {}
                 else { return false; }
             }
             return true;
         })
-        //.attr("stroke", "grey")
         .attr("opacity", 0.1);
 
     svg
         .selectAll(".lines")
-        //.data(data)
         .filter(function (a) {
             for (let i=0; i < axisCombination.length; i++) {
                 if (yScale[axisCombination[i]](a[axisCombination[i]]) >= yValues[i]) {}
@@ -154,6 +160,5 @@ function updateParallelCoordsLines(data) {
             }
             return true;
         })
-        //.attr("stroke", "#69b3a2")
         .attr("opacity", 0.7);
 }
