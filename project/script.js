@@ -69,19 +69,23 @@ function createBarChart(data) {
     .attr("width", width + margin.left + margin.right + 50)
     .attr("height", height + margin.top + margin.bottom + 50)
     .append("g")
-    .attr("transform", `translate(${margin.left+10},${margin.top})`);
+    .attr("transform", `translate(${margin.left + 10},${margin.top})`);
 
-  const modelsPerBrand = d3.rollup(data, 
+  const modelsPerBrand = d3.rollup(
+    data,
     (v) => ({
-        Count: v.length,
-        avgSeats: d3.mean(v, (d) => d.Seats)
-    }), 
-    (d) => d.Brand);
+      Count: v.length,
+      avgSeats: d3.mean(v, (d) => d.Seats),
+    }),
+    (d) => d.Brand
+  );
 
-  const modelsPerBrandArray = Array.from(modelsPerBrand, 
-      ([Brand, {avgSeats, Count}]) => ({ Brand, avgSeats, Count }));
+  const modelsPerBrandArray = Array.from(
+    modelsPerBrand,
+    ([Brand, { avgSeats, Count }]) => ({ Brand, avgSeats, Count })
+  );
 
-  modelsPerBrandArray.sort((a, b) =>  b.Count - a.Count);
+  modelsPerBrandArray.sort((a, b) => b.Count - a.Count);
 
   // Create scales for x and y
   const xScale = d3
@@ -110,11 +114,11 @@ function createBarChart(data) {
     .enter()
     .append("rect")
     .attr("class", "bar")
-    .attr("x", d => xScale(d.Brand))
-    .attr("y", v => yScale(v.Count))
+    .attr("x", (d) => xScale(d.Brand))
+    .attr("y", (v) => yScale(v.Count))
     .attr("width", xScale.bandwidth())
-    .attr("height", v => height - yScale(v.Count))
-    .attr("fill", v => colorScale(v.avgSeats))
+    .attr("height", (v) => height - yScale(v.Count))
+    .attr("fill", (v) => colorScale(v.avgSeats))
     .attr("stroke", "black")
     .attr("stroke-width", 0.5)
     .on("click", function (d) {
@@ -134,29 +138,34 @@ function createBarChart(data) {
   svg.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale).ticks(5)); // change ?
 
   // Create a gradient for the color legend
-  linearGradient = svg.append("g")
+  linearGradient = svg
+    .append("g")
     .append("linearGradient")
     .attr("id", "linearGradient")
     .attr("x1", "0%")
     .attr("x2", "100%");
-    
+
   const numStops = 3;
-  const stopPositions = d3.range(numStops).map(d => d / (numStops - 1));
-  linearGradient.selectAll("stop")
-      .data(stopPositions)
-      .enter().append("stop")
-      .attr("offset", d => d * 100 + "%")
-      .attr("stop-color", d => colorScale(d * 3 + 4)); 
-    
-  svg.append("rect")
+  const stopPositions = d3.range(numStops).map((d) => d / (numStops - 1));
+  linearGradient
+    .selectAll("stop")
+    .data(stopPositions)
+    .enter()
+    .append("stop")
+    .attr("offset", (d) => d * 100 + "%")
+    .attr("stop-color", (d) => colorScale(d * 3 + 4));
+
+  svg
+    .append("rect")
     .attr("width", 200)
     .attr("height", 10)
     .style("fill", "url(#linearGradient)")
     .attr("transform", `translate(0, ${height + 90})`)
     .attr("stroke", "black")
     .attr("stroke-width", 0.5);
-    
-  svg.append("text")
+
+  svg
+    .append("text")
     .attr("x", 100)
     .attr("y", 0)
     //size of letter need to be lower
@@ -165,11 +174,11 @@ function createBarChart(data) {
     .attr("text-anchor", "middle")
     .text("Seats Counter")
     .attr("transform", `translate(0, ${height + 80})`);
-  
+
   // Add ticks and labels
   const ticks = [4, 5, 6, 7]; // Specify the values for which you want ticks
-  const tickXPositions = ticks.map(value => (value - 4) / 3 * 200 - 2);
-  const tickLabels = ['4', '5', '6', '7']; // Labels corresponding to the ticks
+  const tickXPositions = ticks.map((value) => ((value - 4) / 3) * 200 - 2);
+  const tickLabels = ["4", "5", "6", "7"]; // Labels corresponding to the ticks
   const tickHeight = 10; // Height of the tick lines
 
   // Create ticks and labels
@@ -183,7 +192,8 @@ function createBarChart(data) {
       .style("stroke", "black")
       .style("stroke-width", 1);
     */
-    svg.append("text")
+    svg
+      .append("text")
       .attr("x", tickXPositions[i])
       .attr("y", tickHeight + height + 100)
       .text(tickLabels[i])
@@ -193,7 +203,6 @@ function createBarChart(data) {
 }
 
 function createParallelCoordinates(data) {
-
   const selectedData = data.map((d) => {
     const selectedObj = {};
     axisCombination.forEach((attr) => {
@@ -327,16 +336,14 @@ function createParallelCoordinates(data) {
 
   // Create the markers for the filters
   const maxMarkerGroups = axisGroups
-    .append("g")
-    .attr("class", "maxValueMarkers");
-
-  // Add a max value marker to each axis
-  maxMarkerGroups
+    .select(".markers")
+    .data(axisCombination)
+    .enter()
     .append("rect")
-    .attr("class", "maxValue-marker")
+    .attr("class", "maxValueMarkers")
     .attr("width", 10)
     .attr("height", 5)
-    .attr("x", -5)
+    .attr("x", (d) => xScale(d) - 5)
     .attr("y", (d) => yScale[d](maxValues[d]) - 5)
     .attr("fill", "black")
     .attr("stroke", "black");
@@ -399,6 +406,27 @@ function createParallelCoordinates(data) {
           .duration(100)
           .attr("transform", `translate(${xScale(draggedAxis)}, 0)`);
 
+        // to update markers
+        d3.selectAll(".maxValueMarkers")
+          .filter(function (axis) {
+            if (axis == closestAxis)
+              console.log("x: ", xScale(draggedAxis) - 5);
+            return axis == closestAxis;
+          })
+          .transition()
+          .duration(100)
+          .attr("x", xScale(draggedAxis) - 5);
+
+        d3.selectAll(".maxValueMarkers")
+          .filter(function (axis) {
+            if (axis == draggedAxis)
+              console.log("x: ", xScale(closestAxis) - 5);
+            return axis == draggedAxis;
+          })
+          .transition()
+          .duration(100)
+          .attr("x", xScale(closestAxis) - 5);
+
         // Update the order of dimensions
         const oldIndex = axisCombination.indexOf(draggedAxis);
         const newIndex = axisCombination.indexOf(closestAxis);
@@ -458,17 +486,21 @@ function createParallelCoordinates(data) {
       .on("drag", function (event, d) {
         var y = event.y;
 
+        console.log("before: ", y);
         y < 0 ? (y = 0) : (y = y);
         y > height * 3 ? (y = height * 3) : (y = y);
 
-        d3.select(this).attr("transform", `translate(0, ${y})`).attr("y", y);
+        d3.select(this).attr("y", y);
+        console.log("after: ", y);
 
         updateParallelCoordsLines(data);
       })
-      .on("end", function (event, d) { 
-        lines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
-        updateBarChart(lines.map(d => d.__data__));
-    })
+      .on("end", function (event, d) {
+        lines = d3.selectAll(".lines").filter(function (d) {
+          return d3.select(this).style("opacity") == 0.7;
+        })._groups[0];
+        updateBarChart(lines.map((d) => d.__data__));
+      })
   );
 
   minMarkerGroups.call(
@@ -481,7 +513,7 @@ function createParallelCoordinates(data) {
       .on("drag", function (event, d) {
         var y = event.y;
 
-        y > 0 ? y : (y = 0);
+        y > 0 ? (y = y) : (y = 0);
         y > height * 3 ? (y = height * 3) : (y = y);
 
         d3.select(this)
@@ -491,15 +523,16 @@ function createParallelCoordinates(data) {
         updateParallelCoordsLines(data);
       })
       .on("end", function (event, d) {
-        lines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
-        updateBarChart(lines.map(d => d.__data__));
+        lines = d3.selectAll(".lines").filter(function (d) {
+          return d3.select(this).style("opacity") == 0.7;
+        })._groups[0];
+        updateBarChart(lines.map((d) => d.__data__));
       })
   );
 }
 
 function createParallelSets(data) {
-
-    const svg = d3
+  const svg = d3
     .select("#parallelSets")
     .append("svg")
     .attr("width", window.innerWidth)
@@ -507,87 +540,87 @@ function createParallelSets(data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Define scales for each dimension
-    const xScale = d3
-      .scalePoint()
-      .range([0, width])
-      .padding(0.15)
-      .domain(axisCombinationSets);
+  // Define scales for each dimension
+  const xScale = d3
+    .scalePoint()
+    .range([0, width])
+    .padding(0.15)
+    .domain(axisCombinationSets);
 
-    // Create a function to draw the parallel set lines
-    const path = d => {
-      const pathCommands = axisCombinationSets.map(dim => {
-        const x = xScale(dim);
-        if (x === undefined) {
-          return ''; // Skip undefined values
-        }
-        return `${x},${axisCombinationSets.indexOf(dim) * 20}`;
-      });
-    
-      return `M${pathCommands.join('L')}`;
-    }
-    
-    // Draw the parallel set chart
-    svg.selectAll("path")
-      .data(data)
-      .enter()
-      .append("path")
-      .attr("d", path)
-      .style("fill", "none")
-      .style("stroke", "steelblue");
+  // Create a function to draw the parallel set lines
+  const path = (d) => {
+    const pathCommands = axisCombinationSets.map((dim) => {
+      const x = xScale(dim);
+      if (x === undefined) {
+        return ""; // Skip undefined values
+      }
+      return `${x},${axisCombinationSets.indexOf(dim) * 20}`;
+    });
 
-    const axisGroups = svg
-      .selectAll(".axis")
-      .data(axisCombinationSets)
-      .enter()
-      .append("g")
-      .attr("class", "axisGroup")
-      .attr("transform", function (d) {
-        return "translate(" + xScale(d) + ")";
-      });
+    return `M${pathCommands.join("L")}`;
+  };
 
-    axisGroups
-      .each(function (d) {
-        d3.select(this).call(d3.axisLeft().scale(xScale));
-      })
-      .append("text")
-      .style("text-anchor", "middle")
-      .attr("y", height * 2 - margin.top + margin.bottom - 10)
-      .text(function (d) {
-        return d;
-      })
-      .style("fill", "black");
+  // Draw the parallel set chart
+  svg
+    .selectAll("path")
+    .data(data)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .style("fill", "none")
+    .style("stroke", "steelblue");
 
-    // Create the markers for the filters
-    const maxMarkerGroups = axisGroups
-      .append("g")
-      .attr("class", "maxValueMarkers");
+  const axisGroups = svg
+    .selectAll(".axis")
+    .data(axisCombinationSets)
+    .enter()
+    .append("g")
+    .attr("class", "axisGroup")
+    .attr("transform", function (d) {
+      return "translate(" + xScale(d) + ")";
+    });
 
-    // Add a max value marker to each axis
-    maxMarkerGroups
-      .append("rect")
-      .attr("type", "maxValue-marker")
-      .attr("width", 10)
-      .attr("height", 5)
-      .attr("x", -5)
-      .attr("y", (d) => xScale(d) - 5)
-      .attr("fill", "black")
-      .attr("stroke", "black");
+  axisGroups
+    .each(function (d) {
+      d3.select(this).call(d3.axisLeft().scale(xScale));
+    })
+    .append("text")
+    .style("text-anchor", "middle")
+    .attr("y", height * 2 - margin.top + margin.bottom - 10)
+    .text(function (d) {
+      return d;
+    })
+    .style("fill", "black");
 
-    // Create the markers for the filters
-    const minMarkerGroups = axisGroups
-      .append("g")
-      .attr("class", "minValueMarkers");
+  // Create the markers for the filters
+  const maxMarkerGroups = axisGroups
+    .append("g")
+    .attr("class", "maxValueMarkers");
 
-    // Add a min value marker to each axis
-    minMarkerGroups
-      .append("rect")
-      .attr("type", "minValue-marker")
-      .attr("width", 10)
-      .attr("height", 5)
-      .attr("x", -5)
-      .attr("y", (d) => xScale(d) + 0.5)
-      .attr("fill", "black")
-      .attr("stroke", "black");
+  // Add a max value marker to each axis
+  maxMarkerGroups
+    .append("rect")
+    .attr("type", "maxValue-marker")
+    .attr("width", 10)
+    .attr("height", 5)
+    .attr("x", -5)
+    .attr("y", (d) => xScale(d) - 5)
+    .attr("fill", "black")
+    .attr("stroke", "black");
+
+  // Create the markers for the filters
+  const minMarkerGroups = axisGroups
+    .append("g")
+    .attr("class", "minValueMarkers");
+
+  // Add a min value marker to each axis
+  minMarkerGroups
+    .append("rect")
+    .attr("type", "minValue-marker")
+    .attr("width", 10)
+    .attr("height", 5)
+    .attr("x", -5)
+    .attr("y", (d) => xScale(d) + 0.5)
+    .attr("fill", "black")
+    .attr("stroke", "black");
 }
-

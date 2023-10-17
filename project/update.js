@@ -162,23 +162,23 @@ function updateParallelCoordsLines(data) {
       .range([height * 3, 0]);
   });
 
-  yMaxValues = [];
+  yMaxValues = {};
   maxMarkerGroups = d3.selectAll(".maxValueMarkers");
-  maxMarkerGroups.each(function () {
+  maxMarkerGroups.each(function (axis) {
     if (d3.select(this).attr("y") == null) {
-      yMaxValues.push(0);
+      yMaxValues[axis] = 0;
     } else {
-      yMaxValues.push(parseInt(d3.select(this).attr("y")));
+      yMaxValues[axis] = parseInt(d3.select(this).attr("y"));
     }
   });
 
-  yMinValues = [];
+  yMinValues = {};
   minMarkerGroups = d3.selectAll(".minValueMarkers");
-  minMarkerGroups.each(function () {
+  minMarkerGroups.each(function (axis) {
     if (d3.select(this).attr("y") == null) {
-      yMinValues.push(height * 3);
+      yMinValues[axis] = height * 3;
     } else {
-      yMinValues.push(parseInt(d3.select(this).attr("y")));
+      yMinValues[axis] = parseInt(d3.select(this).attr("y"));
     }
   });
 
@@ -188,8 +188,9 @@ function updateParallelCoordsLines(data) {
     .selectAll(".lines")
     .filter(function (a) {
       for (let i = 0; i < axisCombination.length; i++) {
-        currY = yScale[axisCombination[i]](a[axisCombination[i]]);
-        if (currY >= yMinValues[i] || currY <= yMaxValues[i]) {
+        const axis = axisCombination[i];
+        currY = yScale[axis](a[axis]);
+        if (currY >= yMinValues[axis] || currY <= yMaxValues[axis]) {
           return true;
         }
       }
@@ -203,7 +204,7 @@ function updateParallelCoordsLines(data) {
       for (let i = 0; i < axisCombination.length; i++) {
         const axis = axisCombination[i];
         currY = yScale[axis](a[axis]);
-        if (currY <= yMinValues[i] && currY >= yMaxValues[i]) {
+        if (currY <= yMinValues[axis] && currY >= yMaxValues[axis]) {
         } else {
           return false;
         }
