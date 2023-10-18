@@ -532,6 +532,8 @@ function createParallelCoordinates(data) {
 }
 
 function createParallelSets(data) {
+
+  // Select the #parallelSets element and append an SVG to it
   const svg = d3
     .select("#parallelSets")
     .append("svg")
@@ -539,7 +541,7 @@ function createParallelSets(data) {
     .attr("height", height + margin.top + margin.bottom)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
-
+  
   // Define scales for each dimension
   const xScale = d3
     .scalePoint()
@@ -547,14 +549,48 @@ function createParallelSets(data) {
     .padding(0.15)
     .domain(axisCombinationSets);
 
-  // Create a function to draw the parallel set lines
+  // Create a Sankey layout
+  const sankeyLayout = d3.sankey()
+    .nodeId((d) => d.name)
+    .nodeAlign(d3.sankeyCenter)
+    .nodeWidth(15)
+    .nodePadding(10)
+    .extent([[10, 10], [width - 10, height - 10]]);
+
+  // Create nodes and links for the parallel sets
+  const { nodes, links } = sankeyLayout({
+    nodes: axisCombinationSets.map((d) => ({ name: d })),
+    links: data.map((d) => ({
+      source: d.name, 
+      target: d.name,
+      value: 1,   
+    })),
+  });
+
+  // Create a function to draw the links
   const path = (d) => {
+    return d3.sankeyLinkHorizontal()(d);
+  };
+  
+  // Draw the links
+  svg
+    .selectAll("path")
+    .data(links)
+    .enter()
+    .append("path")
+    .attr("d", path)
+    .style("fill", "none")
+    .style("stroke", "steelblue")
+    .style("stroke-width", (d) => Math.max(1, d.width));
+
+  // Create a function to draw the parallel set lines
+  /*const path = (d) => {
     const pathCommands = axisCombinationSets.map((dim) => {
       const x = xScale(dim);
       if (x === undefined) {
         return ""; // Skip undefined values
       }
-      return `${x},${axisCombinationSets.indexOf(dim) * 20}`;
+      return `${x},${d[dim] * 20}`;
     });
 
     return `M${pathCommands.join("L")}`;
@@ -568,7 +604,7 @@ function createParallelSets(data) {
     .append("path")
     .attr("d", path)
     .style("fill", "none")
-    .style("stroke", "steelblue");
+    .style("stroke", "steelblue");*/
 
   const axisGroups = svg
     .selectAll(".axis")
@@ -588,7 +624,7 @@ function createParallelSets(data) {
     .style("text-anchor", "middle")
     .attr("y", height * 2 - margin.top + margin.bottom - 10)
     .text(function (d) {
-      return d;
+      return axisCombinationSets[d];
     })
     .style("fill", "black");
 
