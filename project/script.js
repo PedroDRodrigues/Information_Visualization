@@ -43,7 +43,7 @@ function startDashboard() {
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      createParallelSets(data);
+      //createParallelSets(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
@@ -218,8 +218,8 @@ function createParallelCoordinates(data) {
   const svg = d3
     .select("#parallelCoords")
     .append("svg")
-    .attr("width", window.innerWidth)
-    .attr("height", height * 3 + margin.top + margin.bottom)
+    .attr("width", width + margin.left + margin.right + 50)
+    .attr("height", height * 3 + margin.top + margin.bottom + 50)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -537,8 +537,8 @@ function createParallelSets(data) {
   const svg = d3
     .select("#parallelSets")
     .append("svg")
-    .attr("width", window.innerWidth)
-    .attr("height", height + margin.top + margin.bottom)
+    .attr("width", width + margin.left + margin.right + 50)
+    .attr("height", height + margin.top + margin.bottom + 50)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
   
