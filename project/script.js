@@ -43,7 +43,7 @@ function startDashboard() {
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      //createParallelSets(data);
+      createParallelSets(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
@@ -541,122 +541,100 @@ function createParallelSets(data) {
     .attr("height", height + margin.top + margin.bottom + 50)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
-  
-  // Define scales for each dimension
-  const xScale = d3
-    .scalePoint()
-    .range([0, width])
-    .padding(0.15)
-    .domain(axisCombinationSets);
 
-  // Create a Sankey layout
-  const sankeyLayout = d3.sankey()
-    .nodeId((d) => d.name)
-    .nodeAlign(d3.sankeyCenter)
-    .nodeWidth(15)
-    .nodePadding(10)
-    .extent([[10, 10], [width - 10, height - 10]]);
+  const nodes = [];
+  const links = [];
 
-  // Create nodes and links for the parallel sets
-  const { nodes, links } = sankeyLayout({
-    nodes: axisCombinationSets.map((d) => ({ name: d })),
-    links: data.map((d) => ({
-      source: d.name, 
-      target: d.name,
-      value: 1,   
-    })),
+  data.forEach((d, i) => {
+    
+    nodes[i] = [];
+
+    for (let j = 0; j < axisCombinationSets.length; j++) {
+      const nodeName = axisCombinationSets[j] + "_" + d[axisCombinationSets[j]];
+      const sourceNode = i === 0 ? null : nodes[i - 1][j];
+      let sourceIndex = -1;
+
+      if (sourceNode) {
+        sourceIndex = nodes[i - 1].indexOf(sourceNode);
+        if (sourceIndex === -1) {
+          sourceIndex = nodes[i - 1].push(nodeName) - 1;
+        }
+      }
+
+      const targetNode = sourceIndex !== -1 ? nodes[i - 1][j] : null;
+      const targetIndex = i === 0 ? -1 : nodes[i].indexOf(nodeName);
+      
+      if (targetIndex === -1) {
+        nodes[i].push(nodeName);
+      }
+
+      console.log("nodes[i]: ", nodes[i]);
+
+      if (sourceNode && targetNode) {
+        links.push({
+          source: sourceNode,
+          target: targetNode,
+          value: d.count,
+          sourceIndex: sourceIndex,
+          targetIndex: targetIndex
+        });
+      }
+    }
+
+    nodes.push([`${axisCombinationSets[0]}_${d[axisCombinationSets[0]]}`, `${axisCombinationSets[1]}_${d[axisCombinationSets[1]]}`, `${axisCombinationSets[2]}_${d[axisCombinationSets[2]]}`, `${axisCombinationSets[3]}_${d[axisCombinationSets[3]]}`]);
   });
 
-  // Create a function to draw the links
-  const path = (d) => {
-    return d3.sankeyLinkHorizontal()(d);
-  };
-  
-  // Draw the links
-  svg
-    .selectAll("path")
+  const maxLinkValue = d3.max(links, (d) => d.value);
+
+  const link = svg
+    .selectAll(".link")
     .data(links)
     .enter()
     .append("path")
-    .attr("d", path)
-    .style("fill", "none")
-    .style("stroke", "steelblue")
-    .style("stroke-width", (d) => Math.max(1, d.width));
+    .attr("class", "link")
+    .attr("d", (d) => {
+      /*const startAttr = d.source.split("_")[0];
+      const endAttr = d.target.split("_")[0];
 
-  // Create a function to draw the parallel set lines
-  /*const path = (d) => {
-    const pathCommands = axisCombinationSets.map((dim) => {
-      const x = xScale(dim);
-      if (x === undefined) {
-        return ""; // Skip undefined values
-      }
-      return `${x},${d[dim] * 20}`;
-    });
+      const start = nodes[d.sourceIndex].indexOf(startAttr);
+      const end = nodes[d.targetIndex].indexOf(endAttr);
+      */
+      const startAttr = d.source.split("_")[0]; // Extract the attribute value
+      const endAttr = d.target.split("_")[0];
+  
+      const startNode = nodes[d.sourceIndex][startAttr];
+      const endNode = nodes[d.targetIndex][endAttr];
+  
+      const startIndex = startNode.index; // Get the index of the attribute in the node object
+      const endIndex = endNode.index;
+  
+      const start = startIndex * (width / 3);
+      const end = endIndex * (width / 3);
+      return `M ${start} ${d.sourceIndex * 20} L ${end} ${d.targetIndex * 20}`;
+    })
+    .style("stroke", "blue")
+    .style("stroke-width", (d) => (d.value / maxLinkValue) * 10);
 
-    return `M${pathCommands.join("L")}`;
-  };
-
-  // Draw the parallel set chart
-  svg
-    .selectAll("path")
-    .data(data)
-    .enter()
-    .append("path")
-    .attr("d", path)
-    .style("fill", "none")
-    .style("stroke", "steelblue");*/
-
-  const axisGroups = svg
-    .selectAll(".axis")
-    .data(axisCombinationSets)
+  const node = svg
+    .selectAll(".node")
+    .data(nodes[0])
     .enter()
     .append("g")
-    .attr("class", "axisGroup")
-    .attr("transform", function (d) {
-      return "translate(" + xScale(d) + ")";
-    });
+    .attr("class", "node")
+    .attr("transform", (d, i) => `translate(${i * (width / 3)}, 0)`);
+  
+  node
+    .append("rect")
+    .attr("height", 20)
+    .attr("width", (width / 3) - 10)
+    .style("fill", "blue");
 
-  axisGroups
-    .each(function (d) {
-      d3.select(this).call(d3.axisLeft().scale(xScale));
-    })
+  node
     .append("text")
-    .style("text-anchor", "middle")
-    .attr("y", height * 2 - margin.top + margin.bottom - 10)
-    .text(function (d) {
-      return axisCombinationSets[d];
-    })
-    .style("fill", "black");
-
-  // Create the markers for the filters
-  const maxMarkerGroups = axisGroups
-    .append("g")
-    .attr("class", "maxValueMarkers");
-
-  // Add a max value marker to each axis
-  maxMarkerGroups
-    .append("rect")
-    .attr("type", "maxValue-marker")
-    .attr("width", 10)
-    .attr("height", 5)
-    .attr("x", -5)
-    .attr("y", (d) => xScale(d) - 5)
-    .attr("fill", "black")
-    .attr("stroke", "black");
-
-  // Create the markers for the filters
-  const minMarkerGroups = axisGroups
-    .append("g")
-    .attr("class", "minValueMarkers");
-
-  // Add a min value marker to each axis
-  minMarkerGroups
-    .append("rect")
-    .attr("type", "minValue-marker")
-    .attr("width", 10)
-    .attr("height", 5)
-    .attr("x", -5)
-    .attr("y", (d) => xScale(d) + 0.5)
-    .attr("fill", "black")
-    .attr("stroke", "black");
+    .attr("x", (width / 6))
+    .attr("y", 10)
+    .attr("dy", ".35em")
+    .attr("text-anchor", "middle")
+    .style("fill", "white")
+    .text((d) => d.split("_")[1]);
 }
