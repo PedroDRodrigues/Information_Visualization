@@ -21,6 +21,26 @@ var axisCombination = [
   "TopSpeed_KmH",
 ];
 
+const axisLabels = {
+  "AccelSec": "Acceleration",
+  "Battery_Pack Kwh": "Battery Pack",
+  "Efficiency_WhKm": "Efficiency",
+  "FastCharge_KmH": "Fast Charge",
+  "PriceEuro": "Price",
+  "Range_Km": "Range",
+  "TopSpeed_KmH": "Top Speed" 
+}
+
+const measuresLabels = {
+  "AccelSec": "0-100 (s)",
+  "Battery_Pack Kwh": "(kW/h)",
+  "Efficiency_WhKm": "(Wh/km)",
+  "FastCharge_KmH": "(km/h)",
+  "PriceEuro": "(€)",
+  "Range_Km": "(km)",
+  "TopSpeed_KmH": "(km/h)" 
+}
+
 const axisCombinationSets = [
   "RapidCharge",
   "BodyStyle",
@@ -43,7 +63,7 @@ function startDashboard() {
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      createParallelSets(data);
+      //createParallelSets(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
@@ -287,19 +307,35 @@ function createParallelCoordinates(data) {
       return "translate(" + xScale(d) + ")";
     });
 
+  // Axis Labels
   axisGroups
     .each(function (d) {
-      d3.select(this).call(d3.axisLeft().scale(yScale[d]));
+      const axis = d3.axisLeft().scale(yScale[d]);
+      const minMaxValues = [yScale[d].domain()[0], yScale[d].domain()[1]];
+      axis.tickValues(minMaxValues);
+      d3.select(this).call(axis);
     })
     .append("text")
     .style("text-anchor", "middle")
-    .attr("y", height * 3 - margin.top + margin.bottom - 10)
+    .attr("y", height * 3 - margin.top + margin.bottom - 5)
     .text(function (d) {
-      return d;
+      return axisLabels[d];
+    })
+    .style("fill", "black")
+    .style("font-size", "12px");
+
+  // Measures labels
+  axisGroups
+    .append("text")
+    .style("text-anchor", "middle")
+    .attr("y", height * 3 - margin.top + margin.bottom + 10)
+    .text(function (d) {
+      return measuresLabels[d];
     })
     .style("fill", "black");
 
-  // Create the means for each axis
+  
+  // Create the means for each filtered axis
   const pointMeansFiltered = axisGroups
     .select(".points")
     .data(axisCombination)
@@ -316,6 +352,7 @@ function createParallelCoordinates(data) {
     })
     .attr("fill", colorScale(6))
     .attr("stroke", "black");
+
 
   // Create the means for each axis
   const pointMeans = axisGroups
@@ -334,7 +371,8 @@ function createParallelCoordinates(data) {
     })
     .attr("fill", "black");
 
-  // Create the markers for the filters
+
+  // Create the max markers for the filters
   const maxMarkerGroups = axisGroups
     .select(".markers")
     .data(axisCombination)
@@ -348,6 +386,7 @@ function createParallelCoordinates(data) {
     .attr("fill", "black")
     .attr("stroke", "black");
 
+    
   // Create the markers for the filters
   const minMarkerGroups = axisGroups
     .append("g")
@@ -363,6 +402,7 @@ function createParallelCoordinates(data) {
     .attr("y", (d) => yScale[d](minValues[d]) + 0.5)
     .attr("fill", "black")
     .attr("stroke", "black");
+
 
   // Add drag behavior to axis labels
   axisGroups.call(
