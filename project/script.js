@@ -9,8 +9,6 @@ const margin = { top: 20, right: 10, bottom: 50, left: 10 };
 const width = 1200 - margin.left - margin.right;
 const height = 150 - margin.top - margin.bottom;
 
-// Keep track of the positions of all axes
-const axisPositions = {};
 var axisCombination = [
   "AccelSec",
   "Battery_Pack Kwh",
@@ -315,6 +313,10 @@ function createParallelCoordinates(data) {
       axis.tickValues(minMaxValues);
       d3.select(this).call(axis);
     })
+    .on("mouseover", function(event, item) { return showTooltip(event, item, yScale)})
+    .on("mouseout", hideTooltip);
+
+  axisGroups
     .append("text")
     .style("text-anchor", "middle")
     .attr("y", height * 3 - margin.top + margin.bottom - 5)
@@ -323,6 +325,7 @@ function createParallelCoordinates(data) {
     })
     .style("fill", "black")
     .style("font-size", "12px");
+
 
   // Measures labels
   axisGroups
