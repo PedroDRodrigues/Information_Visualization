@@ -141,7 +141,13 @@ function createBarChart(data) {
     .attr("stroke", "black")
     .attr("stroke-width", 0.5)
     .on("click", function (d) {
-      updateHighlightedBrand(d.target.__data__);
+      updateHighlightedBrandClick(d.target.__data__);
+    })
+    .on("mouseover", function (d) {
+      updateHighlightedBrandMouseOver(d.target.__data__);
+    })
+    .on("mouseout", function (d) {
+      updateHighlightedBrandMouseOut(d.target.__data__);
     });
 
   // Append x and y axes to the chart
@@ -666,9 +672,7 @@ function createParallelSets(data) {
       const startIndex = d.sourceIndex * spaceBetweenAxes;
       const endIndex = d.targetIndex * spaceBetweenAxes;
 
-      return `M ${d.sourceIndex * 5} ${startIndex} L ${
-        d.targetIndex * 5
-      } ${endIndex}`;
+      return `M ${d.sourceIndex * 5} ${startIndex} L ${d.targetIndex * 5} ${endIndex}`;
     })
     .style("stroke", "blue")
     .style("stroke-width", (d) => (d.value / maxLinkValue) * 10);

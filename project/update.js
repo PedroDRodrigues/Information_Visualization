@@ -1,4 +1,4 @@
-let selectedBrands = new Set();
+var selectedBrands = null;
 let selectedAvgSeats = new Set();
 let nextColors = "red";
 
@@ -8,11 +8,11 @@ const colorScale = d3.scaleOrdinal([4, 7], colorsBars);
 const firstColor = "#ef476f";
 const secondeColor = "#ffc43d"; 
 
-function updateHighlightedBrand(clickedBar) {
+function updateHighlightedBrandClick(clickedBar) {
   var brand = clickedBar.Brand;
 
-  if (selectedBrands.has(brand)) {
-    selectedBrands.delete(brand);
+  if (selectedBrands == brand) {
+    selectedBrands = null;
     color = d3
       .selectAll(".bar")
       .filter(function (d) {
@@ -34,27 +34,70 @@ function updateHighlightedBrand(clickedBar) {
 
     nextColors = color;
   } else {
-    if (selectedBrands.size == 2) {
-      firstBrand = selectedBrands.values().next().value;
-      firstAvgSeats = d3.selectAll(".bar").filter(function (d) {
-        return d.Brand == firstBrand;
-      })._groups[0][0].__data__.avgSeats;
-      selectedBrands.delete(firstBrand);
+    if (selectedBrands == null) {
+      color = "red";
 
       d3.selectAll(".bar")
         .filter(function (d) {
-          return d.Brand == firstBrand;
+          return d.Brand == brand;
         })
-        .attr("fill", colorScale(firstAvgSeats));
-
+        .attr("fill", color);
+      
       d3.selectAll(".lines")
         .filter(function (d) {
-          return d.Brand == firstBrand;
+          return d.Brand == brand;
         })
-        .attr("stroke", "#69b3a2");
+        .attr("stroke", color)
+        .attr("opacity", 1);
+
+      selectedBrands = brand;
     }
-    color = selectedBrands.size == 0 ? "red" : nextColors;
-    nextColors = color == "red" ? "blue" : "red";
+  }
+}
+
+function updateHighlightedBrandMouseOver(clickedBar) {
+  var brand = clickedBar.Brand;
+  var clickedBrand = selectedBrands;
+
+  if (selectedBrands != null && brand != clickedBrand) {
+    color = d3
+      .selectAll(".bar")
+      .filter(function (d) {
+        return d.Brand == brand;
+      })
+      .attr("fill");
+
+    d3.selectAll(".bar")
+      .filter(function (d) {
+        return d.Brand == brand;
+      })
+      .attr("fill", colorScale(clickedBar.avgSeats));
+
+    d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == brand;
+      })
+      .attr("stroke", "#69b3a2");
+
+  } else if (selectedBrands != null && brand != clickedBrand) {
+    firstAvgSeats = d3.selectAll(".bar").filter(function (d) {
+      return d.Brand == clickedBrand;
+    })._groups[0][0].__data__.avgSeats;
+
+    d3.selectAll(".bar")
+      .filter(function (d) {
+        return d.Brand == clickedBrand;
+      })
+      .attr("fill", colorScale(firstAvgSeats));
+
+    d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == clickedBrand;
+      })
+      .attr("stroke", "#69b3a2");
+    }
+
+    color = "blue";
 
     d3.selectAll(".bar")
       .filter(function (d) {
@@ -68,8 +111,30 @@ function updateHighlightedBrand(clickedBar) {
       })
       .attr("stroke", color)
       .attr("opacity", 1);
+}
 
-    selectedBrands.add(brand);
+function updateHighlightedBrandMouseOut(clickedBar) {
+  var brand = clickedBar.Brand;
+
+  if (selectedBrands == null || brand != selectedBrands) {
+    color = d3
+      .selectAll(".bar")
+      .filter(function (d) {
+        return d.Brand == brand;
+      })
+      .attr("fill");
+
+    d3.selectAll(".bar")
+      .filter(function (d) {
+        return d.Brand == brand;
+      })
+      .attr("fill", colorScale(clickedBar.avgSeats));
+
+    d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == brand;
+      })
+      .attr("stroke", "#69b3a2");
   }
 }
 
