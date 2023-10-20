@@ -61,8 +61,8 @@ function startDashboard() {
       totalModels = data.length;
 
       // Create different visualizations using the loaded data.
-      createBarChart(data);
       createParallelSets(data);
+      createBarChart(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
@@ -151,7 +151,7 @@ function createBarChart(data) {
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(xScale))
     .selectAll("text")
-    .attr("transform", "rotate(-90) translate(-10, -10)")
+    .attr("transform" , "rotate(-45) translate(0, 5)")
     .style("text-anchor", "end");
 
   svg.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale).ticks(5)); // change ?
