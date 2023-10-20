@@ -61,7 +61,7 @@ function startDashboard() {
 
       // Create different visualizations using the loaded data.
       createBarChart(data);
-      //createParallelSets(data);
+      createParallelSets(data);
       createParallelCoordinates(cleanData);
     })
     .catch((error) => {
