@@ -222,9 +222,13 @@ function updateParallelCoordsLines(data) {
     meanValues[attr] = d3.mean(filteredData, (d) => +d[attr]);
   });
 
-  console.log(yMinValues[0]);
-
   svg.selectAll(".meanPointFiltered")
-  .attr("cy", (a) => yScale[a](meanValues[a]))
+  .attr("cy", function(a) {
+    if (meanValues[a]) {
+      return yScale[a](meanValues[a]);
+    } else {
+      const mean = d3.selectAll(".meanPoint").filter(function(axis) {return axis == a}).attr("cy");
+      return mean;
+    }})
 
 }

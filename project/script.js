@@ -385,7 +385,7 @@ function createParallelCoordinates(data) {
     .attr("width", 10)
     .attr("height", 5)
     .attr("x", (d) => xScale(d) - 5)
-    .attr("y", (d) => yScale[d](maxValues[d]) - 5)
+    .attr("y", (d) => yScale[d](maxValues[d]) - 0.5)
     .attr("fill", "black")
     .attr("stroke", "black");
 
@@ -529,15 +529,15 @@ function createParallelCoordinates(data) {
       .on("drag", function (event, d) {
         var y = event.y;
 
-        console.log("before: ", y);
+        var ymin = parseInt(d3.selectAll(".minValueMarkers").filter(function(axis) { if (axis == d) console.log(d); return axis == d;}).attr("y"));
+        ymin ? ymin = ymin : ymin = height * 3;
+
         y < 0 ? (y = 0) : (y = y);
-        y > height * 3 ? (y = height * 3) : (y = y);
+        y > ymin ? (y = ymin) : (y = y);
 
         d3.select(this).attr("y", y);
-        console.log("after: ", y);
 
-        updateParallelCoordsLines(data);
-      })
+        updateParallelCoordsLines(data);     })
       .on("end", function (event, d) {
         lines = d3.selectAll(".lines").filter(function (d) {
           return d3.select(this).style("opacity") == 0.7;
@@ -555,8 +555,10 @@ function createParallelCoordinates(data) {
       })
       .on("drag", function (event, d) {
         var y = event.y;
+        var ymax = parseInt(d3.selectAll(".maxValueMarkers").filter(function(axis) { if (axis == d) console.log(d); return axis == d;}).attr("y"));
+        ymax ? ymax = ymax : ymax = 0;
 
-        y > 0 ? (y = y) : (y = 0);
+        y > ymax ? (y = y) : (y = ymax);
         y > height * 3 ? (y = height * 3) : (y = y);
 
         d3.select(this)
