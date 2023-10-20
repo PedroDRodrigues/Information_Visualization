@@ -582,8 +582,8 @@ function createParallelSets(data) {
   const svg = d3
     .select("#parallelSets")
     .append("svg")
-    .attr("width", width + margin.left + margin.right + 50)
-    .attr("height", height + margin.top + margin.bottom + 50)
+    .attr("height", (axisCombinationSets.length * spaceBetweenAxes / 8) + margin.left + margin.right + 50)
+    .attr("width", width + margin.top + margin.bottom + 50)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
@@ -613,8 +613,6 @@ function createParallelSets(data) {
         nodes[i].push(nodeName);
       }
 
-      console.log("nodes[i]: ", nodes[i]);
-
       if (sourceNode && targetNode) {
         links.push({
           source: sourceNode,
@@ -626,7 +624,12 @@ function createParallelSets(data) {
       }
     }
 
-    nodes.push([`${axisCombinationSets[0]}_${d[axisCombinationSets[0]]}`, `${axisCombinationSets[1]}_${d[axisCombinationSets[1]]}`, `${axisCombinationSets[2]}_${d[axisCombinationSets[2]]}`, `${axisCombinationSets[3]}_${d[axisCombinationSets[3]]}`]);
+    nodes.push([
+      `${axisCombinationSets[0]}_${d[axisCombinationSets[0]]}`, 
+      `${axisCombinationSets[1]}_${d[axisCombinationSets[1]]}`, 
+      `${axisCombinationSets[2]}_${d[axisCombinationSets[2]]}`, 
+      `${axisCombinationSets[3]}_${d[axisCombinationSets[3]]}`
+    ]);
   });
 
   const maxLinkValue = d3.max(links, (d) => d.value);
@@ -638,24 +641,10 @@ function createParallelSets(data) {
     .append("path")
     .attr("class", "link")
     .attr("d", (d) => {
-      /*const startAttr = d.source.split("_")[0];
-      const endAttr = d.target.split("_")[0];
+      const startIndex = d.sourceIndex * spaceBetweenAxes;
+      const endIndex = d.targetIndex * spaceBetweenAxes;
 
-      const start = nodes[d.sourceIndex].indexOf(startAttr);
-      const end = nodes[d.targetIndex].indexOf(endAttr);
-      */
-      const startAttr = d.source.split("_")[0]; // Extract the attribute value
-      const endAttr = d.target.split("_")[0];
-  
-      const startNode = nodes[d.sourceIndex][startAttr];
-      const endNode = nodes[d.targetIndex][endAttr];
-  
-      const startIndex = startNode.index; // Get the index of the attribute in the node object
-      const endIndex = endNode.index;
-  
-      const start = startIndex * (width / 3);
-      const end = endIndex * (width / 3);
-      return `M ${start} ${d.sourceIndex * 20} L ${end} ${d.targetIndex * 20}`;
+      return `M ${d.sourceIndex * 5} ${startIndex} L ${d.targetIndex * 5} ${endIndex}`; 
     })
     .style("stroke", "blue")
     .style("stroke-width", (d) => (d.value / maxLinkValue) * 10);
@@ -666,18 +655,18 @@ function createParallelSets(data) {
     .enter()
     .append("g")
     .attr("class", "node")
-    .attr("transform", (d, i) => `translate(${i * (width / 3)}, 0)`);
+    .attr("transform", (d, i) => `translate(${i * spaceBetweenAxes}, 0)`);
   
   node
     .append("rect")
-    .attr("height", 20)
-    .attr("width", (width / 3) - 10)
+    .attr("width", 20)
+    .attr("height", (axisCombinationSets.length * spaceBetweenAxes) - 10)
     .style("fill", "blue");
 
   node
     .append("text")
-    .attr("x", (width / 6))
-    .attr("y", 10)
+    .attr("x", 10)
+    .attr("y", (axisCombinationSets.length * spaceBetweenAxes * 0.5))
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
     .style("fill", "white")
