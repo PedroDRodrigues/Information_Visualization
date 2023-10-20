@@ -2,7 +2,11 @@ let selectedBrands = new Set();
 let selectedAvgSeats = new Set();
 let nextColors = "red";
 
-const colorScale = d3.scaleSequential([4, 7], d3.interpolateGreens);
+const colorsBars = ["#c2e7d9","#64D889",  "#00A096", "#394053"];
+const colorScale = d3.scaleOrdinal([4, 7], colorsBars);
+
+const firstColor = "#ef476f";
+const secondeColor = "#ffc43d"; 
 
 function updateHighlightedBrand(clickedBar) {
   var brand = clickedBar.Brand;

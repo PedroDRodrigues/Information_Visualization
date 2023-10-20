@@ -20,24 +20,24 @@ var axisCombination = [
 ];
 
 const axisLabels = {
-  "AccelSec": "Acceleration",
+  AccelSec: "Acceleration",
   "Battery_Pack Kwh": "Battery Pack",
-  "Efficiency_WhKm": "Efficiency",
-  "FastCharge_KmH": "Fast Charge",
-  "PriceEuro": "Price",
-  "Range_Km": "Range",
-  "TopSpeed_KmH": "Top Speed" 
-}
+  Efficiency_WhKm: "Efficiency",
+  FastCharge_KmH: "Fast Charge",
+  PriceEuro: "Price",
+  Range_Km: "Range",
+  TopSpeed_KmH: "Top Speed",
+};
 
 const measuresLabels = {
-  "AccelSec": "0-100 (s)",
+  AccelSec: "0-100 (s)",
   "Battery_Pack Kwh": "(kW/h)",
-  "Efficiency_WhKm": "(Wh/km)",
-  "FastCharge_KmH": "(km/h)",
-  "PriceEuro": "(€)",
-  "Range_Km": "(km)",
-  "TopSpeed_KmH": "(km/h)" 
-}
+  Efficiency_WhKm: "(Wh/km)",
+  FastCharge_KmH: "(km/h)",
+  PriceEuro: "(€)",
+  Range_Km: "(km)",
+  TopSpeed_KmH: "(km/h)",
+};
 
 const axisCombinationSets = [
   "RapidCharge",
@@ -47,6 +47,7 @@ const axisCombinationSets = [
 ];
 
 const spaceBetweenAxes = width / 6;
+const colors = ["#c2e7d9","#64D889",  "#00A096", "#394053"];
 
 // This function initiates the dashboard and loads the csv data.
 function startDashboard() {
@@ -115,7 +116,7 @@ function createBarChart(data) {
   const yScale = d3.scaleLinear().domain([0, 15]).range([height, 0]);
 
   // Create a color scale for the bars based on the seats data
-  const colorScale = d3.scaleSequential([4, 7], d3.interpolateGreens); // You can choose a different color scheme
+  const colorScale = d3.scaleOrdinal([4, 7], colors); 
 
   svg
     .append("text")
@@ -155,43 +156,46 @@ function createBarChart(data) {
 
   svg.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale).ticks(5)); // change ?
 
-  // Create a gradient for the color legend
-  linearGradient = svg
-    .append("g")
-    .append("linearGradient")
-    .attr("id", "linearGradient")
-    .attr("x1", "0%")
-    .attr("x2", "100%");
+  const colorSections = svg.append("g").attr("transform", "translate(10, 10)");
 
-  const numStops = 3;
-  const stopPositions = d3.range(numStops).map((d) => d / (numStops - 1));
-  linearGradient
-    .selectAll("stop")
-    .data(stopPositions)
-    .enter()
-    .append("stop")
-    .attr("offset", (d) => d * 100 + "%")
-    .attr("stop-color", (d) => colorScale(d * 3 + 4));
+  const sectionWidth = 40; // Width of each color section
+  const sectionHeight = 10; // Height of each color section
 
-  svg
-    .append("rect")
-    .attr("width", 200)
-    .attr("height", 10)
-    .style("fill", "url(#linearGradient)")
-    .attr("transform", `translate(0, ${height + 90})`)
+  // Iterate over your colors and create sections
+  colors.forEach((color, index) => {
+    // Create a rectangle for each color section
+    colorSections
+      .append("rect")
+      .attr("x", index * sectionWidth)
+      .attr("width", sectionWidth)
+      .attr("height", sectionHeight)
+      .style("fill", color);
+
+    // Create a label for each value at the bottom of the section
+    colorSections
+      .append("text")
+      .text(index + 4) // Corresponding value
+      .attr("x", index * sectionWidth + sectionWidth / 2)
+      .attr("y", sectionHeight + 15) // Position the label below the section
+      .style("text-anchor", "middle")
+      .style("font-size", "12px");
+  });
+
+  colorSections
     .attr("stroke", "black")
-    .attr("stroke-width", 0.5);
+    .attr("stroke-width", 0.3)
+    .attr("transform", `translate(0, ${height + 70})`);
 
-  svg
+  // Create a gradient for the color legend
+  colorSections
     .append("text")
-    .attr("x", 100)
-    .attr("y", 0)
+    .attr("x", 200)
+    .attr("y", 5)
     //size of letter need to be lower
     .attr("font-size", "10px")
     .attr("dy", "0.5em")
     .attr("text-anchor", "middle")
-    .text("Seats Counter")
-    .attr("transform", `translate(0, ${height + 80})`);
+    .text("Seats Counter");
 
   // Add ticks and labels
   const ticks = [4, 5, 6, 7]; // Specify the values for which you want ticks
@@ -313,7 +317,10 @@ function createParallelCoordinates(data) {
       axis.tickValues(minMaxValues);
       d3.select(this).call(axis);
     })
-    .on("mouseover", function(event, item) { return showTooltip(event, item, yScale)})
+    .on("mouseover", function (event, item) {
+      console.log(event);
+      return showTooltip(event, item, yScale);
+    })
     .on("mouseout", hideTooltip);
 
   axisGroups
@@ -326,7 +333,6 @@ function createParallelCoordinates(data) {
     .style("fill", "black")
     .style("font-size", "12px");
 
-
   // Measures labels
   axisGroups
     .append("text")
@@ -337,7 +343,6 @@ function createParallelCoordinates(data) {
     })
     .style("fill", "black");
 
-  
   // Create the means for each filtered axis
   const pointMeansFiltered = axisGroups
     .select(".points")
@@ -356,7 +361,6 @@ function createParallelCoordinates(data) {
     .attr("fill", colorScale(6))
     .attr("stroke", "black");
 
-
   // Create the means for each axis
   const pointMeans = axisGroups
     .select(".points")
@@ -374,7 +378,6 @@ function createParallelCoordinates(data) {
     })
     .attr("fill", "black");
 
-
   // Create the max markers for the filters
   const maxMarkerGroups = axisGroups
     .select(".markers")
@@ -389,7 +392,6 @@ function createParallelCoordinates(data) {
     .attr("fill", "black")
     .attr("stroke", "black");
 
-    
   // Create the markers for the filters
   const minMarkerGroups = axisGroups
     .append("g")
@@ -405,7 +407,6 @@ function createParallelCoordinates(data) {
     .attr("y", (d) => yScale[d](minValues[d]) + 0.5)
     .attr("fill", "black")
     .attr("stroke", "black");
-
 
   // Add drag behavior to axis labels
   axisGroups.call(
@@ -529,15 +530,24 @@ function createParallelCoordinates(data) {
       .on("drag", function (event, d) {
         var y = event.y;
 
-        var ymin = parseInt(d3.selectAll(".minValueMarkers").filter(function(axis) { if (axis == d) console.log(d); return axis == d;}).attr("y"));
-        ymin ? ymin = ymin : ymin = height * 3;
+        var ymin = parseInt(
+          d3
+            .selectAll(".minValueMarkers")
+            .filter(function (axis) {
+              if (axis == d) console.log(d);
+              return axis == d;
+            })
+            .attr("y")
+        );
+        ymin ? (ymin = ymin) : (ymin = height * 3);
 
         y < 0 ? (y = 0) : (y = y);
         y > ymin ? (y = ymin) : (y = y);
 
         d3.select(this).attr("y", y);
 
-        updateParallelCoordsLines(data);     })
+        updateParallelCoordsLines(data);
+      })
       .on("end", function (event, d) {
         lines = d3.selectAll(".lines").filter(function (d) {
           return d3.select(this).style("opacity") == 0.7;
@@ -555,8 +565,16 @@ function createParallelCoordinates(data) {
       })
       .on("drag", function (event, d) {
         var y = event.y;
-        var ymax = parseInt(d3.selectAll(".maxValueMarkers").filter(function(axis) { if (axis == d) console.log(d); return axis == d;}).attr("y"));
-        ymax ? ymax = ymax : ymax = 0;
+        var ymax = parseInt(
+          d3
+            .selectAll(".maxValueMarkers")
+            .filter(function (axis) {
+              if (axis == d) console.log(d);
+              return axis == d;
+            })
+            .attr("y")
+        );
+        ymax ? (ymax = ymax) : (ymax = 0);
 
         y > ymax ? (y = y) : (y = ymax);
         y > height * 3 ? (y = height * 3) : (y = y);
@@ -577,12 +595,17 @@ function createParallelCoordinates(data) {
 }
 
 function createParallelSets(data) {
-
   // Select the #parallelSets element and append an SVG to it
   const svg = d3
     .select("#parallelSets")
     .append("svg")
-    .attr("height", (axisCombinationSets.length * spaceBetweenAxes / 8) + margin.left + margin.right + 50)
+    .attr(
+      "height",
+      (axisCombinationSets.length * spaceBetweenAxes) / 8 +
+        margin.left +
+        margin.right +
+        50
+    )
     .attr("width", width + margin.top + margin.bottom + 50)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
@@ -591,7 +614,6 @@ function createParallelSets(data) {
   const links = [];
 
   data.forEach((d, i) => {
-    
     nodes[i] = [];
 
     for (let j = 0; j < axisCombinationSets.length; j++) {
@@ -608,7 +630,7 @@ function createParallelSets(data) {
 
       const targetNode = sourceIndex !== -1 ? nodes[i - 1][j] : null;
       const targetIndex = i === 0 ? -1 : nodes[i].indexOf(nodeName);
-      
+
       if (targetIndex === -1) {
         nodes[i].push(nodeName);
       }
@@ -619,16 +641,16 @@ function createParallelSets(data) {
           target: targetNode,
           value: d.count,
           sourceIndex: sourceIndex,
-          targetIndex: targetIndex
+          targetIndex: targetIndex,
         });
       }
     }
 
     nodes.push([
-      `${axisCombinationSets[0]}_${d[axisCombinationSets[0]]}`, 
-      `${axisCombinationSets[1]}_${d[axisCombinationSets[1]]}`, 
-      `${axisCombinationSets[2]}_${d[axisCombinationSets[2]]}`, 
-      `${axisCombinationSets[3]}_${d[axisCombinationSets[3]]}`
+      `${axisCombinationSets[0]}_${d[axisCombinationSets[0]]}`,
+      `${axisCombinationSets[1]}_${d[axisCombinationSets[1]]}`,
+      `${axisCombinationSets[2]}_${d[axisCombinationSets[2]]}`,
+      `${axisCombinationSets[3]}_${d[axisCombinationSets[3]]}`,
     ]);
   });
 
@@ -644,7 +666,9 @@ function createParallelSets(data) {
       const startIndex = d.sourceIndex * spaceBetweenAxes;
       const endIndex = d.targetIndex * spaceBetweenAxes;
 
-      return `M ${d.sourceIndex * 5} ${startIndex} L ${d.targetIndex * 5} ${endIndex}`; 
+      return `M ${d.sourceIndex * 5} ${startIndex} L ${
+        d.targetIndex * 5
+      } ${endIndex}`;
     })
     .style("stroke", "blue")
     .style("stroke-width", (d) => (d.value / maxLinkValue) * 10);
@@ -656,17 +680,17 @@ function createParallelSets(data) {
     .append("g")
     .attr("class", "node")
     .attr("transform", (d, i) => `translate(${i * spaceBetweenAxes}, 0)`);
-  
+
   node
     .append("rect")
     .attr("width", 20)
-    .attr("height", (axisCombinationSets.length * spaceBetweenAxes) - 10)
+    .attr("height", axisCombinationSets.length * spaceBetweenAxes - 10)
     .style("fill", "blue");
 
   node
     .append("text")
     .attr("x", 10)
-    .attr("y", (axisCombinationSets.length * spaceBetweenAxes * 0.5))
+    .attr("y", axisCombinationSets.length * spaceBetweenAxes * 0.5)
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
     .style("fill", "white")

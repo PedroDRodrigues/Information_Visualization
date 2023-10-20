@@ -40,9 +40,9 @@ function updateAxisCombination() {
 }
 
 function showTooltip(event, item, yScale) {
-    //const axisRect = d3.select(this).node().getBoundingClientRect();
-    const mouseY = event.clientY - margin.top - 29;
-    if (mouseY > 0 && mouseY < 240 || margin == 0 || margin == 240) {
+    const mouseY = event.clientY - margin.bottom - 30 - 430
+    console.log(mouseY);
+    if (mouseY > 0 && mouseY < 240 || mouseY == 0 || mouseY == 240) {
       const yValue = document.getElementById("yValue");
       yValue.textContent = Math.round(yScale[item].invert(mouseY)).toLocaleString("en-US");
   
