@@ -47,7 +47,7 @@ const axisCombinationSets = [
 ];
 
 const spaceBetweenAxes = width / 6;
-const colors = ["#c2e7d9","#64D889",  "#00A096", "#394053"];
+const colors = ["#c2e7d9", "#64D889", "#00A096", "#394053"];
 
 // This function initiates the dashboard and loads the csv data.
 function startDashboard() {
@@ -116,7 +116,7 @@ function createBarChart(data) {
   const yScale = d3.scaleLinear().domain([0, 15]).range([height, 0]);
 
   // Create a color scale for the bars based on the seats data
-  const colorScale = d3.scaleOrdinal([4, 7], colors); 
+  const colorScale = d3.scaleOrdinal([4, 7], colors);
 
   svg
     .append("text")
@@ -157,7 +157,7 @@ function createBarChart(data) {
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(xScale))
     .selectAll("text")
-    .attr("transform" , "rotate(-45) translate(0, 5)")
+    .attr("transform", "rotate(-45) translate(0, 5)")
     .style("text-anchor", "end");
 
   svg.append("g").attr("class", "y-axis").call(d3.axisLeft(yScale).ticks(5)); // change ?
@@ -601,23 +601,45 @@ function createParallelCoordinates(data) {
 }
 
 function createParallelSets(data) {
+
   // Select the #parallelSets element and append an SVG to it
   const svg = d3
     .select("#parallelSets")
     .append("svg")
-    .attr(
-      "height",
-      (axisCombinationSets.length * spaceBetweenAxes) / 8 +
-        margin.left +
-        margin.right +
-        50
-    )
+    .attr("height", height + margin.left + margin.right + 50)
     .attr("width", width + margin.top + margin.bottom + 50)
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
   const nodes = [];
   const links = [];
+
+  const rapidCharge = {"Yes": 0, "No": 0};
+  const bodyStyle = {"Sedan": 0, "Hatchback": 0, "Liftback": 0, "SUV": 0, "Pickup": 0, "MPV": 0, "Cabrio": 0, "SPV": 0, "Station": 0};
+  const segment = {"A": 0, "B": 0, "C": 0, "D": 0, "E": 0, "F": 0, "N": 0, "S": 0};
+  const powerTrain = {"AWD": 0, "RWD": 0, "FWD": 0};
+
+  // Count how many times each value appears on each attribute
+  data.forEach((d) => {
+    for (let i = 0; i < axisCombinationSets.length; i++) {
+      console.log("d: ", d, " i: ", i);
+      const axis = axisCombinationSets[i];
+      if (axis == "RapidCharge") {
+        rapidCharge[d[axis]] ++;
+      } else if (axis == "BodyStyle") {
+        bodyStyle[d[axis]]++;
+      } else if (axis == "Segment") {
+        segment[d[axis]]++;
+      } else if (axis == "PowerTrain") { 
+        powerTrain[d[axis]]++;
+      }
+    }
+  })
+
+  console.log(rapidCharge);
+  console.log(bodyStyle);
+  console.log(segment);
+  console.log(powerTrain);
 
   data.forEach((d, i) => {
     nodes[i] = [];
@@ -672,10 +694,46 @@ function createParallelSets(data) {
       const startIndex = d.sourceIndex * spaceBetweenAxes;
       const endIndex = d.targetIndex * spaceBetweenAxes;
 
-      return `M ${d.sourceIndex * 5} ${startIndex} L ${d.targetIndex * 5} ${endIndex}`;
+      return `M ${d.sourceIndex * 5} ${startIndex} L ${
+        d.targetIndex * 5
+      } ${endIndex}`;
     })
     .style("stroke", "blue")
     .style("stroke-width", (d) => (d.value / maxLinkValue) * 10);
+
+  //console.log(nodes);
+
+  const padding = 10;
+  const heightSets = 100;
+
+  //
+  // Create an axis per attribute and slipt it accordingly the percentage of each value
+  //
+
+  // RapidCharging
+  var availableHeigh = heightSets - (Object.keys(rapidCharge).length - 1) * padding;
+  console.log("a: ", rapidCharge.length);
+  let i = 0;
+
+  const rapidChargeAxis = svg
+    .append("g")
+    .attr("class", "rapidChargAxis");
+  
+  var height_rapid = rapidCharge["Yes"] / 102 * availableHeigh;
+
+  const yes = rapidChargeAxis
+    .append("rect")
+    .attr("width", 5)
+    .attr("height", height_rapid)
+    .attr("fill", "black");
+    
+  availableHeigh -= height;
+  const no = rapidChargeAxis
+    .append("rect")
+    .attr("width", 5)
+    .attr("height", availableHeigh)
+    .attr("fill", "black")
+    .attr("transform", `translate(0, ${padding + height_rapid})`);
 
   const node = svg
     .selectAll(".node")
@@ -683,13 +741,14 @@ function createParallelSets(data) {
     .enter()
     .append("g")
     .attr("class", "node")
-    .attr("transform", (d, i) => `translate(${i * spaceBetweenAxes}, 0)`);
+    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
 
+  /*
   node
     .append("rect")
-    .attr("width", 20)
+    .attr("width", 10)
     .attr("height", axisCombinationSets.length * spaceBetweenAxes - 10)
-    .style("fill", "blue");
+    .style("fill", "black"); */
 
   node
     .append("text")
