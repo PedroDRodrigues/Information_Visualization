@@ -694,30 +694,25 @@ function createParallelSets(data) {
       const startIndex = d.sourceIndex * spaceBetweenAxes;
       const endIndex = d.targetIndex * spaceBetweenAxes;
 
-      return `M ${d.sourceIndex * 5} ${startIndex} L ${
-        d.targetIndex * 5
-      } ${endIndex}`;
+      return `M ${d.sourceIndex * 5} ${startIndex} L ${d.targetIndex * 5} ${endIndex}`;
     })
     .style("stroke", "blue")
     .style("stroke-width", (d) => (d.value / maxLinkValue) * 10);
 
-  //console.log(nodes);
-
   const padding = 10;
   const heightSets = 100;
 
-  //
   // Create an axis per attribute and slipt it accordingly the percentage of each value
-  //
 
   // RapidCharging
-  var availableHeigh = heightSets - (Object.keys(rapidCharge).length - 1) * padding;
+  /*var availableHeigh = heightSets - (Object.keys(rapidCharge).length - 1) * padding;
   console.log("a: ", rapidCharge.length);
   let i = 0;
 
   const rapidChargeAxis = svg
     .append("g")
-    .attr("class", "rapidChargAxis");
+    .attr("class", "rapidChargAxis")
+    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
   
   var height_rapid = rapidCharge["Yes"] / 102 * availableHeigh;
 
@@ -741,8 +736,128 @@ function createParallelSets(data) {
     .enter()
     .append("g")
     .attr("class", "node")
+    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);*/
+
+  // RapidCharging
+  let i = 0;
+  var availableHeight = heightSets - (Object.keys(rapidCharge).length - 1) * padding;
+
+  const rapidChargeAxis = svg
+    .append("g")
+    .attr("class", "rapidChargeAxis")
     .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
 
+  for (const charge in rapidCharge) {
+    const chargeHeight = (rapidCharge[charge] / data.length) * availableHeight;
+
+    const rect = rapidChargeAxis
+      .append("rect")
+      .attr("width", 5)
+      .attr("height", chargeHeight)
+      .attr("fill", "black");
+
+    availableHeight -= chargeHeight;
+    rapidChargeAxis
+      .append("text")
+      .attr("x", 10)
+      .attr("y", chargeHeight / 2)
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "white")
+      .text(charge);
+  } 
+
+  // Calculate available height for the "BodyStyle" axis
+  availableHeight = heightSets - (Object.keys(bodyStyle).length - 1) * padding;
+  i = 1; // Update the index to position the axis correctly
+
+  const bodyStyleAxis = svg
+    .append("g")
+    .attr("class", "bodyStyleAxis")
+    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
+
+  // Create rectangles for each "BodyStyle" value
+  for (const style in bodyStyle) {
+    const styleHeight = (bodyStyle[style] / 102) * availableHeight;
+
+    const rect = bodyStyleAxis
+      .append("rect")
+      .attr("width", 5)
+      .attr("height", styleHeight)
+      .attr("fill", "black");
+
+    availableHeight -= styleHeight;
+    bodyStyleAxis
+      .append("text")
+      .attr("x", 10)
+      .attr("y", styleHeight / 2)
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "white")
+      .text(style);
+  }
+
+  // Calculate available height for the "Segment" axis
+  availableHeight = heightSets - (Object.keys(segment).length - 1) * padding;
+  i = 2; // Update the index to position the axis correctly
+
+  const segmentAxis = svg
+    .append("g")
+    .attr("class", "segmentAxis")
+    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
+
+  // Create rectangles for each "Segment" value
+  for (const seg in segment) {
+    const segHeight = (segment[seg] / 102) * availableHeight;
+
+    const rect = segmentAxis
+      .append("rect")
+      .attr("width", 5)
+      .attr("height", segHeight)
+      .attr("fill", "black");
+
+    availableHeight -= segHeight;
+    segmentAxis
+      .append("text")
+      .attr("x", 10)
+      .attr("y", segHeight / 2)
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "white")
+      .text(seg);
+  }
+
+  // Calculate available height for the "PowerTrain" axis
+  availableHeight = heightSets - (Object.keys(powerTrain).length - 1) * padding;
+  i = 3; // Update the index to position the axis correctly
+
+  const powerTrainAxis = svg
+    .append("g")
+    .attr("class", "powerTrainAxis")
+    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
+
+  // Create rectangles for each "PowerTrain" value
+  for (const train in powerTrain) {
+    const trainHeight = (powerTrain[train] / 102) * availableHeight;
+
+    const rect = powerTrainAxis
+      .append("rect")
+      .attr("width", 5)
+      .attr("height", trainHeight)
+      .attr("fill", "black");
+
+    availableHeight -= trainHeight;
+    powerTrainAxis
+      .append("text")
+      .attr("x", 10)
+      .attr("y", trainHeight / 2)
+      .attr("dy", ".35em")
+      .attr("text-anchor", "start")
+      .style("fill", "white")
+      .text(train);
+  }
+
+  console.log("powerTrain number of items: ", Object.keys(powerTrain).length);
   /*
   node
     .append("rect")
@@ -750,12 +865,12 @@ function createParallelSets(data) {
     .attr("height", axisCombinationSets.length * spaceBetweenAxes - 10)
     .style("fill", "black"); */
 
-  node
+  /*node
     .append("text")
     .attr("x", 10)
     .attr("y", axisCombinationSets.length * spaceBetweenAxes * 0.5)
     .attr("dy", ".35em")
     .attr("text-anchor", "middle")
     .style("fill", "white")
-    .text((d) => d.split("_")[1]);
+    .text((d) => d.split("_")[1]);*/
 }
