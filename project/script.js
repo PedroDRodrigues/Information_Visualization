@@ -47,7 +47,6 @@ const axisCombinationSets = [
 ];
 
 const spaceBetweenAxes = width / 6;
-const colors = ["#c2e7d9", "#64D889", "#00A096", "#394053"];
 
 // This function initiates the dashboard and loads the csv data.
 function startDashboard() {
@@ -116,7 +115,10 @@ function createBarChart(data) {
   const yScale = d3.scaleLinear().domain([0, 15]).range([height, 0]);
 
   // Create a color scale for the bars based on the seats data
-  const colorScale = d3.scaleOrdinal([4, 7], colors);
+  const colorScale = d3.scaleQuantize([2, 7], d3.schemeGreens[6]);
+  colors = [];
+  colors.push(colorScale.range()[0]); colors.push(colorScale.range()[1]); colors.push(colorScale.range()[2]);
+  colors.push(colorScale.range()[3]); colors.push(colorScale.range()[4]); colors.push(colorScale.range()[5]);
 
   svg
     .append("text")
@@ -143,11 +145,13 @@ function createBarChart(data) {
     .on("click", function (d) {
       updateHighlightedBrandClick(d.target.__data__);
     })
-    .on("mouseover", function (d) {
-      updateHighlightedBrandMouseOver(d.target.__data__);
+    .on("mouseover", function (event, d) {
+      showBarTooltip(event, d);
+      updateHighlightedBrandMouseOver(event.target.__data__);
     })
     .on("mouseout", function (d) {
-      updateHighlightedBrandMouseOut(d.target.__data__);
+      hideTooltip();
+      updateHighlightedBrandMouseOut(event.target.__data__);
     });
 
   // Append x and y axes to the chart
@@ -180,7 +184,7 @@ function createBarChart(data) {
     // Create a label for each value at the bottom of the section
     colorSections
       .append("text")
-      .text(index + 4) // Corresponding value
+      .text(index + 2) // Corresponding value
       .attr("x", index * sectionWidth + sectionWidth / 2)
       .attr("y", sectionHeight + 15) // Position the label below the section
       .style("text-anchor", "middle")
@@ -195,39 +199,13 @@ function createBarChart(data) {
   // Create a gradient for the color legend
   colorSections
     .append("text")
-    .attr("x", 200)
-    .attr("y", 5)
+    .attr("x", 275)
+    .attr("y", 4)
     //size of letter need to be lower
     .attr("font-size", "10px")
     .attr("dy", "0.5em")
     .attr("text-anchor", "middle")
     .text("Seats Counter");
-
-  // Add ticks and labels
-  const ticks = [4, 5, 6, 7]; // Specify the values for which you want ticks
-  const tickXPositions = ticks.map((value) => ((value - 4) / 3) * 200 - 2);
-  const tickLabels = ["4", "5", "6", "7"]; // Labels corresponding to the ticks
-  const tickHeight = 10; // Height of the tick lines
-
-  // Create ticks and labels
-  for (let i = 0; i < ticks.length; i++) {
-    /*
-    svg.append("line")
-      .attr("x1", tickXPositions[i] + 2)
-      .attr("x2", tickXPositions[i] + 2)
-      .attr("y1", height + 90 - tickHeight)
-      .attr("y2", height + 90)
-      .style("stroke", "black")
-      .style("stroke-width", 1);
-    */
-    svg
-      .append("text")
-      .attr("x", tickXPositions[i])
-      .attr("y", tickHeight + height + 100)
-      .text(tickLabels[i])
-      .style("font-size", "10px")
-      .style("fill", "black");
-  }
 }
 
 function createParallelCoordinates(data) {

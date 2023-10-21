@@ -1,140 +1,87 @@
-var selectedBrands = null;
-let selectedAvgSeats = new Set();
-let nextColors = "red";
+var selectedBrand = null;
 
-const colorsBars = ["#c2e7d9","#64D889",  "#00A096", "#394053"];
-const colorScale = d3.scaleOrdinal([4, 7], colorsBars);
+const selectedColor = "#ef476f";
+const hoveredColor = "#7570b3";
 
-const firstColor = "#ef476f";
-const secondeColor = "#ffc43d"; 
+const colorScale = d3.scaleQuantize([2, 7], d3.schemeGreens[6]);
+
+function resetHighlightedBrand(clickedBar) {
+  d3.selectAll(".bar")
+    .filter(function (d) {
+      return d.Brand == clickedBar.Brand;
+    })
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5);
+
+  d3.selectAll(".lines")
+    .filter(function (d) {
+      return d.Brand == clickedBar.Brand;
+    })
+    .attr("stroke", "#38A055");
+}
 
 function updateHighlightedBrandClick(clickedBar) {
   var brand = clickedBar.Brand;
 
-  if (selectedBrands == brand) {
-    selectedBrands = null;
-    color = d3
-      .selectAll(".bar")
-      .filter(function (d) {
-        return d.Brand == brand;
-      })
-      .attr("fill");
-
+  // de-select brand
+  if (selectedBrand == brand) {
+    selectedBrand = null;
+    resetHighlightedBrand(clickedBar);
+  } else {
+    // select new brand
+    if (selectedBrand != null) {
+      const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0].__data__;
+      resetHighlightedBrand(bar);
+    }
+    selectedBrand = brand;
     d3.selectAll(".bar")
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("fill", colorScale(clickedBar.avgSeats));
-
+      .attr("stroke", selectedColor)
+      .attr("stroke-width", 2.5);
+    
     d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("stroke", "#69b3a2");
-
-    nextColors = color;
-  } else {
-    if (selectedBrands == null) {
-      color = "red";
-
-      d3.selectAll(".bar")
-        .filter(function (d) {
-          return d.Brand == brand;
-        })
-        .attr("fill", color);
-      
-      d3.selectAll(".lines")
-        .filter(function (d) {
-          return d.Brand == brand;
-        })
-        .attr("stroke", color)
-        .attr("opacity", 1);
-
-      selectedBrands = brand;
-    }
+      .attr("stroke", selectedColor);
   }
 }
 
-function updateHighlightedBrandMouseOver(clickedBar) {
-  var brand = clickedBar.Brand;
-  var clickedBrand = selectedBrands;
-
-  if (selectedBrands != null && brand != clickedBrand) {
-    color = d3
-      .selectAll(".bar")
-      .filter(function (d) {
-        return d.Brand == brand;
-      })
-      .attr("fill");
-
+function updateHighlightedBrandMouseOver(hoveredBar) {
+  var brand = hoveredBar.Brand;
+  if (selectedBrand != brand) {
     d3.selectAll(".bar")
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("fill", colorScale(clickedBar.avgSeats));
+      .attr("stroke", hoveredColor)
+      .attr("stroke-width", 2.5);
 
     d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("stroke", "#69b3a2");
-
-  } else if (selectedBrands != null && brand != clickedBrand) {
-    firstAvgSeats = d3.selectAll(".bar").filter(function (d) {
-      return d.Brand == clickedBrand;
-    })._groups[0][0].__data__.avgSeats;
-
-    d3.selectAll(".bar")
-      .filter(function (d) {
-        return d.Brand == clickedBrand;
-      })
-      .attr("fill", colorScale(firstAvgSeats));
-
-    d3.selectAll(".lines")
-      .filter(function (d) {
-        return d.Brand == clickedBrand;
-      })
-      .attr("stroke", "#69b3a2");
-    }
-
-    color = "blue";
-
-    d3.selectAll(".bar")
-      .filter(function (d) {
-        return d.Brand == brand;
-      })
-      .attr("fill", color);
-
-    d3.selectAll(".lines")
-      .filter(function (d) {
-        return d.Brand == brand;
-      })
-      .attr("stroke", color)
-      .attr("opacity", 1);
+      .attr("stroke", hoveredColor);
+  }
 }
 
-function updateHighlightedBrandMouseOut(clickedBar) {
-  var brand = clickedBar.Brand;
-
-  if (selectedBrands == null || brand != selectedBrands) {
-    color = d3
-      .selectAll(".bar")
-      .filter(function (d) {
-        return d.Brand == brand;
-      })
-      .attr("fill");
-
+function updateHighlightedBrandMouseOut(hoveredBar) {
+  var brand = hoveredBar.Brand;
+  if (selectedBrand != brand) {
     d3.selectAll(".bar")
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("fill", colorScale(clickedBar.avgSeats));
+      .attr("stroke", "black")
+      .attr("stroke-width", 0.5);
 
     d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("stroke", "#69b3a2");
+      .attr("stroke", "#38A055");
   }
 }
 
@@ -172,12 +119,19 @@ function updateBarChart(data) {
 
   bars
     .transition()
-    .duration(1000)
+    .duration(500)
     .attr("x", (d) => xScale(d.Brand))
     .attr("y", (v) => yScale(v.Count))
     .attr("width", xScale.bandwidth())
     .attr("height", (v) => height - yScale(v.Count))
-    .attr("fill", (v) => colorScale(v.avgSeats));
+    .attr("fill", (v) => colorScale(v.avgSeats))
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5)
+    .on("end", function () {
+      if (selectedBrand != null) {
+        d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; }).attr("stroke", selectedColor).attr("stroke-width", 2.5);
+      }
+    });
 
   bars
     .enter()
@@ -188,8 +142,10 @@ function updateBarChart(data) {
     .attr("width", xScale.bandwidth())
     .attr("height", 0)
     .attr("fill", (v) => colorScale(v.avgSeats))
+    .attr("stroke", "black")
+    .attr("stroke-width", 0.5)
     .transition()
-    .duration(2000)
+    .duration(500)
     .attr("height", (v) => height - yScale(v.Count));
 
   bars.exit().transition().duration(500).attr("height", 0).remove();
@@ -207,15 +163,15 @@ function updateBarChart(data) {
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(xScale))
     .selectAll("text")
-    .attr("transform", "rotate(-90) translate(-10, -10)")
+    .attr("transform", "rotate(-45) translate(0, 5)")
     .style("text-anchor", "end");
 
   svg
     .select(".total-percentage-label")
     .transition()
     .duration(500)
-    .attr("x", width - margin.right - 23)
-    .attr("y", 150)
+    .attr("x", width - margin.right - 30)
+    .attr("y", 160)
     .attr("text-anchor", "middle")
     .text((currentModels / totalModels).toFixed(2) * 100 + "% models");
 }

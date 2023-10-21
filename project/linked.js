@@ -56,3 +56,12 @@ function hideTooltip() {
     const tooltip = document.getElementById('tooltip');
     tooltip.style.display = 'none';
 }
+
+function showBarTooltip(event, item, x, y) {
+  const yValue = document.getElementById("yValue");
+  console.log(item)
+  yValue.textContent = item.Count;
+  tooltip.style.left = (event.pageX) + "px";
+  tooltip.style.top = (event.pageY) + "px";
+  tooltip.style.display = "block";
+}
