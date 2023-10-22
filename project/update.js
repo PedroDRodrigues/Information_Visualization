@@ -170,8 +170,8 @@ function updateBarChart(data) {
     .select(".total-percentage-label")
     .transition()
     .duration(500)
-    .attr("x", width - margin.right - 30)
-    .attr("y", 160)
+    .attr("x", width - margin.right - 60)
+    .attr("y", 145)
     .attr("text-anchor", "middle")
     .text((currentModels / totalModels).toFixed(2) * 100 + "% models");
 }

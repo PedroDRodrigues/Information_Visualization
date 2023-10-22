@@ -123,10 +123,20 @@ function createBarChart(data) {
   svg
     .append("text")
     .attr("class", "total-percentage-label")
-    .attr("x", width - margin.right - 23)
-    .attr("y", 170)
+    .attr("x", width - margin.right - 60)
+    .attr("y", 145)
     .attr("text-anchor", "middle")
     .text("100% models");
+
+  // Add a phrase explaining what "100% models" represents
+  svg
+    .append("text")
+    .attr("class", "explanation-label")
+    .attr("x", width - margin.right - 65)
+    .attr("y", 165) // Adjust the Y position as needed
+    .attr("text-anchor", "middle")
+    .style("font-size", "10px")
+    .text("Represents proportion of models filtered");
 
   // Create the bars
   svg
