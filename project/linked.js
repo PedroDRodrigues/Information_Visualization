@@ -63,3 +63,11 @@ function showBarTooltip(event, item, x, y) {
   tooltip.style.top = (event.pageY) + "px";
   tooltip.style.display = "block";
 }
+
+function showSetsTooltip(event, item) {
+  const yValue = document.getElementById("yValue");
+  yValue.textContent = item;
+  tooltip.style.left = (event.pageX) + "px";
+  tooltip.style.top = (event.pageY) + "px";
+  tooltip.style.display = "block";
+}

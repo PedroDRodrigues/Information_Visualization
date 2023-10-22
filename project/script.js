@@ -60,9 +60,10 @@ function startDashboard() {
       totalModels = data.length;
 
       // Create different visualizations using the loaded data.
-      createParallelSets(data);
+      //createParallelSets(data);
       createBarChart(data);
       createParallelCoordinates(cleanData);
+      createPS(data);
     })
     .catch((error) => {
       // If there's an error while loading the csv data, log the error.
@@ -577,6 +578,138 @@ function createParallelCoordinates(data) {
         updateBarChart(lines.map((d) => d.__data__));
       })
   );
+}
+
+function createPS(data) {
+  // Select the #parallelSets element and append an SVG to it
+  const svg = d3
+    .select("#parallelSets")
+    .append("svg")
+    .attr("height", height * 3 + margin.left + margin.right + 50)
+    .attr("width", width + margin.top + margin.bottom + 50)
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  
+  const nominalAttributes = data.map(function (d) {
+    return {
+      RapidCharge: d.RapidCharge,
+      BodyStyle: d.BodyStyle,
+      Segment: d.Segment,
+      PowerTrain: d.PowerTrain
+    };
+  });
+  
+  const setsData = {};
+
+  Object.keys(nominalAttributes[0]).forEach(function(attribute) {
+      setsData[attribute] = {};
+  });
+
+  nominalAttributes.forEach(function(d) {
+      Object.keys(d).forEach(function(attribute) {
+          const value = d[attribute];
+          if (!setsData[attribute][value]) {
+              setsData[attribute][value] = 1;
+          } else {
+              setsData[attribute][value]++;
+          }
+      });
+  });
+
+  // Define the x and y positions for the rectangles
+  const x = d3.scaleBand()
+    .domain(Object.keys(setsData))
+    .range([0, width]);
+
+  const ys = []
+
+  // Iterate through the attributes
+  Object.keys(setsData).forEach(function(attribute) {
+    const y = [];
+    const values = Object.keys(setsData[attribute]);
+    const numValues = values.length;
+    const rectWidth = 10;
+
+    const totalCount = d3.sum(values, value => setsData[attribute][value]);
+    const maxHeight = height * 3 - (numValues - 1);
+
+    // Create a group for each attribute
+    const attributeGroup = svg.append('g')
+        .attr('transform', 'translate(' + x(attribute) + ', 5)');
+
+    // Create a set of rectangles for each attribute
+    attributeGroup.selectAll('rect')
+        .data(values)
+        .enter().append('rect')
+        .attr('x', 150)
+        .attr('y', function(d, i) {
+          if (i === 0) { y.push(0); return 0;}
+          const prevHeight = d3.sum(values.slice(0, i).map(value => (setsData[attribute][value] / totalCount) * maxHeight));
+          y.push(prevHeight + i);
+          return prevHeight + i;
+        })
+        .attr('width', rectWidth)
+        .attr('height', function(value) {
+          return (setsData[attribute][value] / totalCount) * maxHeight;
+        })
+        .style('fill', 'steelblue') // You can customize the colors
+        .on("mouseover", function(event, d) {
+          showSetsTooltip(event, d);
+        })
+        .on("mouseout", function(event, d) {
+          hideTooltip();
+        });
+
+    // Add labels to the attribute group
+    attributeGroup.append('text')
+        .attr('x', rectWidth / 2 + 150)
+        .attr('y', -10)
+        .attr('text-anchor', 'middle')
+        .text(attribute);
+    ys.push(y)
+  });
+  ys.pop();
+
+  const groupedData = [];
+
+  // Iterate through the attributes
+  Object.keys(setsData).forEach(function(attribute, index, attributes) {
+    if (attribute == "PowerTrain") {return;}
+    const values = Object.keys(setsData[attribute]);
+
+    // Create a set of rectangles for each attribute with proportional heights
+    const attributeData = [];
+    values.forEach(function(value, i) {
+        const valueCount = setsData[attribute][value];
+        const nextAttribute = attributes[index + 1];
+
+        if (nextAttribute) {
+            const nextAttributeValues = Object.keys(setsData[nextAttribute]);
+            nextAttributeValues.forEach(function(nextValue) {
+                const modelsWithNextValue = data.filter(d => d[attribute] === value && d[nextAttribute] === nextValue);
+                const count = modelsWithNextValue.length;
+                attributeData.push({
+                    [attribute]: value,
+                    [nextAttribute]: nextValue,
+                    Count: count
+                });
+            });
+        } else {
+          // If this is the last attribute, add a data point for the current attribute value
+          attributeData.push({
+            [attribute]: value,
+            Count: valueCount
+          });
+        }
+    });
+    groupedData.push(attributeData);
+  });
+  //console.log(groupedData)
+
+  groupedData.forEach(function (d) {
+    console.log(d);
+  });
 }
 
 function createParallelSets(data) {
