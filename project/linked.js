@@ -41,7 +41,6 @@ function updateAxisCombination() {
 
 function showTooltip(event, item, yScale) {
     const mouseY = event.clientY - margin.bottom - 30 - 430
-    console.log(mouseY);
     if (mouseY > 0 && mouseY < 240 || mouseY == 0 || mouseY == 240) {
       const yValue = document.getElementById("yValue");
       yValue.textContent = Math.round(yScale[item].invert(mouseY)).toLocaleString("en-US");
@@ -59,7 +58,6 @@ function hideTooltip() {
 
 function showBarTooltip(event, item, x, y) {
   const yValue = document.getElementById("yValue");
-  console.log(item)
   yValue.textContent = item.Count;
   tooltip.style.left = (event.pageX) + "px";
   tooltip.style.top = (event.pageY) + "px";
