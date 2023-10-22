@@ -118,14 +118,18 @@ function createBarChart(data) {
   // Create a color scale for the bars based on the seats data
   const colorScale = d3.scaleQuantize([2, 7], d3.schemeGreens[6]);
   colors = [];
-  colors.push(colorScale.range()[0]); colors.push(colorScale.range()[1]); colors.push(colorScale.range()[2]);
-  colors.push(colorScale.range()[3]); colors.push(colorScale.range()[4]); colors.push(colorScale.range()[5]);
+  colors.push(colorScale.range()[0]);
+  colors.push(colorScale.range()[1]);
+  colors.push(colorScale.range()[2]);
+  colors.push(colorScale.range()[3]);
+  colors.push(colorScale.range()[4]);
+  colors.push(colorScale.range()[5]);
 
   svg
     .append("text")
     .attr("class", "total-percentage-label")
     .attr("x", width - margin.right - 60)
-    .attr("y", 145)
+    .attr("y", 150)
     .attr("text-anchor", "middle")
     .text("100% models");
 
@@ -133,11 +137,11 @@ function createBarChart(data) {
   svg
     .append("text")
     .attr("class", "explanation-label")
-    .attr("x", width - margin.right - 65)
-    .attr("y", 165) // Adjust the Y position as needed
+    .attr("x", width - margin.right - 60)
+    .attr("y", 170) // Adjust the Y position as needed
     .attr("text-anchor", "middle")
     .style("font-size", "10px")
-    .text("Represents proportion of models filtered");
+    .text("Proportion of models filtered");
 
   // Create the bars
   svg
@@ -210,10 +214,10 @@ function createBarChart(data) {
   // Create a gradient for the color legend
   colorSections
     .append("text")
-    .attr("x", 275)
+    .attr("x", 280)
     .attr("y", 4)
     //size of letter need to be lower
-    .attr("font-size", "10px")
+    .attr("font-size", "12px")
     .attr("dy", "0.5em")
     .attr("text-anchor", "middle")
     .text("Seats Counter");
@@ -408,9 +412,9 @@ function createParallelCoordinates(data) {
       .drag()
       .on("start", function (event, d) {
         //Occulte the mean point
-        d3.selectAll(".meanPoint").attr("opacity", 0);
         d3.selectAll(".meanPointFiltered").attr("opacity", 0);
-
+        d3.selectAll(".meanPoint").attr("opacity", 0);
+        
         // Store the original position for reference
         d3.select(this).attr(
           "data-original-x",
@@ -496,12 +500,21 @@ function createParallelCoordinates(data) {
         const x = event.x; // Extract x-coordinate
         const draggedAxis = d;
 
-        d3.selectAll(".meanPoint")
-          .attr("cx", (a) => xScale(a))
-          .attr("cy", (a) => yScale[a](meanValues[a]))
-          .attr("opacity", 1);
+        const filteredLines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
+        const filteredData = filteredLines.map(d => d.__data__);
+      
+        // Calculate the mean values of each attribute
+        const meanFilteredValues = {};
+        axisCombination.forEach((attr) => {
+          meanFilteredValues[attr] = d3.mean(filteredData, (d) => +d[attr]);
+        });
 
         d3.selectAll(".meanPointFiltered")
+          .attr("cx", (a) => xScale(a))
+          .attr("cy", (a) => yScale[a](meanFilteredValues[a]))
+          .attr("opacity", 1);
+
+        d3.selectAll(".meanPoint")
           .attr("cx", (a) => xScale(a))
           .attr("cy", (a) => yScale[a](meanValues[a]))
           .attr("opacity", 1);
@@ -556,7 +569,7 @@ function createParallelCoordinates(data) {
           d3
             .selectAll(".maxValueMarkers")
             .filter(function (axis) {
-               return axis == d;
+              return axis == d;
             })
             .attr("y")
         );
@@ -590,118 +603,133 @@ function createPS(data) {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  
   const nominalAttributes = data.map(function (d) {
     return {
       RapidCharge: d.RapidCharge,
       BodyStyle: d.BodyStyle,
       Segment: d.Segment,
-      PowerTrain: d.PowerTrain
+      PowerTrain: d.PowerTrain,
     };
   });
-  
+
   const setsData = {};
 
-  Object.keys(nominalAttributes[0]).forEach(function(attribute) {
-      setsData[attribute] = {};
+  Object.keys(nominalAttributes[0]).forEach(function (attribute) {
+    setsData[attribute] = {};
   });
 
-  nominalAttributes.forEach(function(d) {
-      Object.keys(d).forEach(function(attribute) {
-          const value = d[attribute];
-          if (!setsData[attribute][value]) {
-              setsData[attribute][value] = 1;
-          } else {
-              setsData[attribute][value]++;
-          }
-      });
+  nominalAttributes.forEach(function (d) {
+    Object.keys(d).forEach(function (attribute) {
+      const value = d[attribute];
+      if (!setsData[attribute][value]) {
+        setsData[attribute][value] = 1;
+      } else {
+        setsData[attribute][value]++;
+      }
+    });
   });
 
   // Define the x and y positions for the rectangles
-  const x = d3.scaleBand()
-    .domain(Object.keys(setsData))
-    .range([0, width]);
+  const x = d3.scaleBand().domain(Object.keys(setsData)).range([0, width]);
 
-  const ys = []
+  const ys = [];
 
   // Iterate through the attributes
-  Object.keys(setsData).forEach(function(attribute) {
+  Object.keys(setsData).forEach(function (attribute) {
     const y = [];
     const values = Object.keys(setsData[attribute]);
     const numValues = values.length;
     const rectWidth = 10;
 
-    const totalCount = d3.sum(values, value => setsData[attribute][value]);
+    const totalCount = d3.sum(values, (value) => setsData[attribute][value]);
     const maxHeight = height * 3 - (numValues - 1);
 
     // Create a group for each attribute
-    const attributeGroup = svg.append('g')
-        .attr('transform', 'translate(' + x(attribute) + ', 5)');
+    const attributeGroup = svg
+      .append("g")
+      .attr("transform", "translate(" + x(attribute) + ", 5)");
 
     // Create a set of rectangles for each attribute
-    attributeGroup.selectAll('rect')
-        .data(values)
-        .enter().append('rect')
-        .attr('x', 150)
-        .attr('y', function(d, i) {
-          if (i === 0) { y.push(0); return 0;}
-          const prevHeight = d3.sum(values.slice(0, i).map(value => (setsData[attribute][value] / totalCount) * maxHeight));
-          y.push(prevHeight + i);
-          return prevHeight + i;
-        })
-        .attr('width', rectWidth)
-        .attr('height', function(value) {
-          return (setsData[attribute][value] / totalCount) * maxHeight;
-        })
-        .style('fill', 'steelblue') // You can customize the colors
-        .on("mouseover", function(event, d) {
-          showSetsTooltip(event, d);
-        })
-        .on("mouseout", function(event, d) {
-          hideTooltip();
-        });
+    attributeGroup
+      .selectAll("rect")
+      .data(values)
+      .enter()
+      .append("rect")
+      .attr("x", 150)
+      .attr("y", function (d, i) {
+        if (i === 0) {
+          y.push(0);
+          return 0;
+        }
+        const prevHeight = d3.sum(
+          values
+            .slice(0, i)
+            .map(
+              (value) => (setsData[attribute][value] / totalCount) * maxHeight
+            )
+        );
+        y.push(prevHeight + i);
+        return prevHeight + i;
+      })
+      .attr("width", rectWidth)
+      .attr("height", function (value) {
+        return (setsData[attribute][value] / totalCount) * maxHeight;
+      })
+      .style("fill", "green") // You can customize the colors
+      .on("mouseover", function (event, d) {
+        showSetsTooltip(event, d);
+      })
+      .on("mouseout", function (event, d) {
+        hideTooltip();
+      });
 
     // Add labels to the attribute group
-    attributeGroup.append('text')
-        .attr('x', rectWidth / 2 + 150)
-        .attr('y', -10)
-        .attr('text-anchor', 'middle')
-        .text(attribute);
-    ys.push(y)
+    attributeGroup
+      .append("text")
+      .attr("x", rectWidth / 2 + 150)
+      .attr("y", -10)
+      .attr("text-anchor", "middle")
+      .style("font-size", "12px")
+      .text(attribute);
+    ys.push(y);
   });
   ys.pop();
 
   const groupedData = [];
 
   // Iterate through the attributes
-  Object.keys(setsData).forEach(function(attribute, index, attributes) {
-    if (attribute == "PowerTrain") {return;}
+  Object.keys(setsData).forEach(function (attribute, index, attributes) {
+    if (attribute == "PowerTrain") {
+      return;
+    }
     const values = Object.keys(setsData[attribute]);
 
     // Create a set of rectangles for each attribute with proportional heights
     const attributeData = [];
-    values.forEach(function(value, i) {
-        const valueCount = setsData[attribute][value];
-        const nextAttribute = attributes[index + 1];
+    values.forEach(function (value, i) {
+      const valueCount = setsData[attribute][value];
+      const nextAttribute = attributes[index + 1];
 
-        if (nextAttribute) {
-            const nextAttributeValues = Object.keys(setsData[nextAttribute]);
-            nextAttributeValues.forEach(function(nextValue) {
-                const modelsWithNextValue = data.filter(d => d[attribute] === value && d[nextAttribute] === nextValue);
-                const count = modelsWithNextValue.length;
-                attributeData.push({
-                    [attribute]: value,
-                    [nextAttribute]: nextValue,
-                    Count: count
-                });
-            });
-        } else {
-          // If this is the last attribute, add a data point for the current attribute value
+      if (nextAttribute) {
+        const nextAttributeValues = Object.keys(setsData[nextAttribute]);
+        nextAttributeValues.forEach(function (nextValue) {
+          const modelsWithNextValue = data.filter(
+            (d) => d[attribute] === value && d[nextAttribute] === nextValue
+          );
+          const count = modelsWithNextValue.length;
           attributeData.push({
             [attribute]: value,
-            Count: valueCount
+            [nextAttribute]: nextValue,
+            Count: count,
           });
-        }
+        });
+      } else {
+        // If this is the last attribute, add a data point for the current attribute value
+        attributeData.push({
+          [attribute]: value,
+          Count: valueCount,
+        });
+      }
     });
     groupedData.push(attributeData);
   });
@@ -713,7 +741,6 @@ function createPS(data) {
 }
 
 function createParallelSets(data) {
-
   // Select the #parallelSets element and append an SVG to it
   const svg = d3
     .select("#parallelSets")
@@ -726,26 +753,36 @@ function createParallelSets(data) {
   const nodes = [];
   const links = [];
 
-  const rapidCharge = {"Yes": 0, "No": 0};
-  const bodyStyle = {"Sedan": 0, "Hatchback": 0, "Liftback": 0, "SUV": 0, "Pickup": 0, "MPV": 0, "Cabrio": 0, "SPV": 0, "Station": 0};
-  const segment = {"A": 0, "B": 0, "C": 0, "D": 0, "E": 0, "F": 0, "N": 0, "S": 0};
-  const powerTrain = {"AWD": 0, "RWD": 0, "FWD": 0};
+  const rapidCharge = { Yes: 0, No: 0 };
+  const bodyStyle = {
+    Sedan: 0,
+    Hatchback: 0,
+    Liftback: 0,
+    SUV: 0,
+    Pickup: 0,
+    MPV: 0,
+    Cabrio: 0,
+    SPV: 0,
+    Station: 0,
+  };
+  const segment = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, N: 0, S: 0 };
+  const powerTrain = { AWD: 0, RWD: 0, FWD: 0 };
 
   // Count how many times each value appears on each attribute
   data.forEach((d) => {
     for (let i = 0; i < axisCombinationSets.length; i++) {
       const axis = axisCombinationSets[i];
       if (axis == "RapidCharge") {
-        rapidCharge[d[axis]] ++;
+        rapidCharge[d[axis]]++;
       } else if (axis == "BodyStyle") {
         bodyStyle[d[axis]]++;
       } else if (axis == "Segment") {
         segment[d[axis]]++;
-      } else if (axis == "PowerTrain") { 
+      } else if (axis == "PowerTrain") {
         powerTrain[d[axis]]++;
       }
     }
-  })
+  });
 
   console.log(rapidCharge);
   console.log(bodyStyle);
@@ -818,7 +855,8 @@ function createParallelSets(data) {
   // Create an axis per attribute and slipt it accordingly the percentage of each value
   // RapidCharging
   let i = 0;
-  var availableHeight = heightSets - (Object.keys(rapidCharge).length - 1) * padding;
+  var availableHeight =
+    heightSets - (Object.keys(rapidCharge).length - 1) * padding;
   var translation = 0;
 
   const rapidChargeAxis = svg
@@ -840,13 +878,13 @@ function createParallelSets(data) {
       .append("text")
       .attr("x", 10)
       .attr("y", height / 2)
-      
+
       .attr("text-anchor", "start")
       .style("fill", "white")
       .text(value);
 
     translation += padding + height;
-  } 
+  }
 
   // Calculate available height for the "BodyStyle" axis
   availableHeight = heightSets - (Object.keys(bodyStyle).length - 1) * padding;
@@ -904,7 +942,7 @@ function createParallelSets(data) {
 
     segmentAxis
       .append("text")
-      .attr("x", 10) 
+      .attr("x", 10)
       .attr("y", height / 2)
       .attr("dy", ".35em")
       .attr("text-anchor", "start")
@@ -944,7 +982,7 @@ function createParallelSets(data) {
       .style("fill", "white")
       .text(value);
 
-      translation += padding + height;
+    translation += padding + height;
   }
 
   /*

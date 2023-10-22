@@ -59,15 +59,15 @@ function hideTooltip() {
 function showBarTooltip(event, item, x, y) {
   const yValue = document.getElementById("yValue");
   yValue.textContent = item.Count;
-  tooltip.style.left = (event.pageX) + "px";
-  tooltip.style.top = (event.pageY) + "px";
+  tooltip.style.left = (event.pageX + 7.5) + "px";
+  tooltip.style.top = (event.pageY - 10) + "px";
   tooltip.style.display = "block";
 }
 
 function showSetsTooltip(event, item) {
   const yValue = document.getElementById("yValue");
   yValue.textContent = item;
-  tooltip.style.left = (event.pageX) + "px";
-  tooltip.style.top = (event.pageY) + "px";
+  tooltip.style.left = (event.pageX + 7.5) + "px";
+  tooltip.style.top = (event.pageY - 10) + "px";
   tooltip.style.display = "block";
 }
