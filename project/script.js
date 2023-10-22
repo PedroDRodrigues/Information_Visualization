@@ -217,8 +217,8 @@ function createParallelCoordinates(data) {
     return selectedObj;
   });
 
-  const colorScale = d3.scaleSequential([4, 7], d3.interpolateGreens);
-  const color = colorScale(6);
+  const colorScale = d3.scaleQuantize([2, 7], d3.schemeGreens[6]);
+  const color = colorScale(5);
 
   // Select the #parallelCoords element and append an SVG to it
   const svg = d3
@@ -280,7 +280,7 @@ function createParallelCoordinates(data) {
     )
     .attr("fill", "none")
     .attr("stroke", color)
-    .attr("opacity", 0.7);
+    .attr("opacity", 0.6);
 
   // Draw the axis
   const axisGroups = svg

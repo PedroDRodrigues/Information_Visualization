@@ -1,7 +1,7 @@
 var selectedBrand = null;
 
-const selectedColor = "#ef476f";
-const hoveredColor = "#7570b3";
+const selectedColor = "#fc8d62";
+const hoveredColor = "#1f78b4";
 
 const colorScale = d3.scaleQuantize([2, 7], d3.schemeGreens[6]);
 
@@ -17,7 +17,7 @@ function resetHighlightedBrand(clickedBar) {
     .filter(function (d) {
       return d.Brand == clickedBar.Brand;
     })
-    .attr("stroke", "#38A055");
+    .attr("stroke", colorScale(5));
 }
 
 function updateHighlightedBrandClick(clickedBar) {
@@ -81,7 +81,7 @@ function updateHighlightedBrandMouseOut(hoveredBar) {
       .filter(function (d) {
         return d.Brand == brand;
       })
-      .attr("stroke", "#38A055");
+      .attr("stroke", colorScale(5));
   }
 }
 
