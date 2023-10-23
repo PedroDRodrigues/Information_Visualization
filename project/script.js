@@ -164,7 +164,7 @@ function createBarChart(data) {
       showBarTooltip(event, d);
       updateHighlightedBrandMouseOver(event.target.__data__);
     })
-    .on("mouseout", function (d) {
+    .on("mouseout", function (event, d) {
       hideTooltip();
       updateHighlightedBrandMouseOut(event.target.__data__);
     });

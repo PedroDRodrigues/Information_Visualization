@@ -30,8 +30,8 @@ function updateHighlightedBrandClick(clickedBar) {
   } else {
     // select new brand
     if (selectedBrand != null) {
-      const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0].__data__;
-      resetHighlightedBrand(bar);
+      const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0];
+      if (bar != undefined) { resetHighlightedBrand(bar.__data__); }
     }
     selectedBrand = brand;
     d3.selectAll(".bar")
@@ -174,6 +174,17 @@ function updateBarChart(data) {
     .attr("y", 145)
     .attr("text-anchor", "middle")
     .text((currentModels / totalModels).toFixed(2) * 100 + "% models");
+
+  svg
+    .selectAll(".bar")
+    .on("mouseover", function (event, d) {
+      showBarTooltip(event, d);
+      updateHighlightedBrandMouseOver(event.target.__data__);
+    })
+    .on("mouseout", function (event) {
+      hideTooltip();
+      updateHighlightedBrandMouseOut(event.target.__data__);
+    });
 }
 
 function updateParallelCoordsLines(data) {
