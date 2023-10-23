@@ -30,6 +30,7 @@ function updateHighlightedBrandClick(clickedBar) {
   } else {
     // select new brand
     if (selectedBrand != null) {
+      console.log(selectedBrand)
       const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0];
       if (bar != undefined) { resetHighlightedBrand(bar.__data__); }
     }
@@ -177,6 +178,9 @@ function updateBarChart(data) {
 
   svg
     .selectAll(".bar")
+    .on("click", function (d) {
+      updateHighlightedBrandClick(d.target.__data__);
+    })
     .on("mouseover", function (event, d) {
       showBarTooltip(event, d);
       updateHighlightedBrandMouseOver(event.target.__data__);
