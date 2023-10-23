@@ -740,6 +740,12 @@ function createPS(data) {
 
   const linkColorScale = d3.scaleOrdinal(d3.schemeCategory10);
 
+  const lineGenerator = 
+    d3.line()
+      .x(function(d) { return d.x; })
+      .y(function(d) { return d.y; })
+      .curve(d3.curveBasis);
+
   groupedData.forEach(function (d, i) {
     // get the values of starting y of each attribute rect
     const ySource = ys[i];
@@ -805,10 +811,12 @@ function createPS(data) {
 
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
-        .append("polygon")
+        .append("path")
+        .attr("d", lineGenerator(polygonVertices))
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
-        .attr("fill", d3.color(linkColor).brighter(saturation))
-        .attr("stroke", d3.color(linkColor).darker(saturation));
-    }
+        .attr("fill", d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
+        .attr("stroke", d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }));
+      }
+
   });
 }
