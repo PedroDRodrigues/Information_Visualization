@@ -216,10 +216,9 @@ function createBarChart(data) {
     .append("text")
     .attr("x", 280)
     .attr("y", 4)
-    //size of letter need to be lower
-    .attr("font-size", "12px")
     .attr("dy", "0.5em")
     .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
     .text("Seats Counter");
 }
 
@@ -414,7 +413,7 @@ function createParallelCoordinates(data) {
         //Occulte the mean point
         d3.selectAll(".meanPointFiltered").attr("opacity", 0);
         d3.selectAll(".meanPoint").attr("opacity", 0);
-        
+
         // Store the original position for reference
         d3.select(this).attr(
           "data-original-x",
@@ -500,9 +499,11 @@ function createParallelCoordinates(data) {
         const x = event.x; // Extract x-coordinate
         const draggedAxis = d;
 
-        const filteredLines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
-        const filteredData = filteredLines.map(d => d.__data__);
-      
+        const filteredLines = d3.selectAll(".lines").filter(function (d) {
+          return d3.select(this).style("opacity") == 0.7;
+        })._groups[0];
+        const filteredData = filteredLines.map((d) => d.__data__);
+
         // Calculate the mean values of each attribute
         const meanFilteredValues = {};
         axisCombination.forEach((attr) => {
@@ -629,6 +630,8 @@ function createPS(data) {
     });
   });
 
+  console.log(setsData);
+
   // Define the x and y positions for the rectangles
   const x = d3.scaleBand().domain(Object.keys(setsData)).range([0, width]);
 
@@ -636,7 +639,7 @@ function createPS(data) {
 
   // Iterate through the attributes
   Object.keys(setsData).forEach(function (attribute) {
-    const y = [];
+    const y = {};
     const values = Object.keys(setsData[attribute]);
     const numValues = values.length;
     const rectWidth = 10;
@@ -651,31 +654,30 @@ function createPS(data) {
 
     // Create a set of rectangles for each attribute
     attributeGroup
-      .selectAll("rect")
+      .selectAll(".rect")
       .data(values)
       .enter()
       .append("rect")
       .attr("x", 150)
       .attr("y", function (d, i) {
         if (i === 0) {
-          y.push(0);
+          y[d] = 0;
           return 0;
         }
         const prevHeight = d3.sum(
           values
             .slice(0, i)
-            .map(
-              (value) => (setsData[attribute][value] / totalCount) * maxHeight
+            .map(function (value) { return (setsData[attribute][value] / totalCount) * maxHeight;}
             )
         );
-        y.push(prevHeight + i);
+        y[d] = prevHeight + i;
         return prevHeight + i;
       })
       .attr("width", rectWidth)
       .attr("height", function (value) {
         return (setsData[attribute][value] / totalCount) * maxHeight;
       })
-      .style("fill", "green") // You can customize the colors
+      .style("fill", "green")
       .on("mouseover", function (event, d) {
         showSetsTooltip(event, d);
       })
@@ -691,10 +693,12 @@ function createPS(data) {
       .attr("text-anchor", "middle")
       .style("font-size", "12px")
       .text(attribute);
+
     ys.push(y);
   });
   ys.pop();
 
+  console.log(ys);
   const groupedData = [];
 
   // Iterate through the attributes
@@ -733,10 +737,72 @@ function createPS(data) {
     });
     groupedData.push(attributeData);
   });
-  //console.log(groupedData)
 
-  groupedData.forEach(function (d) {
-    console.log(d);
+  groupedData.forEach(function (d, i) {
+    // get the values of starting y of each attribute rect
+    const ySource = ys[i];
+    const yTarget = ys[i+1];
+
+    console.log("ySource: ", ySource);
+    console.log("yTarget: ", yTarget);
+
+    
+    // iterate over each attribute to draw the polygnon for each link
+    for (let j = 0; j < d.length; j++) {
+      const source = Object.keys(setsData)[i];
+      const target = Object.keys(setsData)[i + 1];
+
+      // Source
+      const valuesSource = Object.keys(setsData[source]);
+      const totalCountSource = d3.sum(
+        valuesSource,
+        (value) => setsData[source][value]
+      );
+      const numValuesSource = valuesSource.length;
+      const maxHeightSource = height * 3 - (numValuesSource - 1);
+
+      // Target
+      const valuesTarget = Object.keys(setsData[source]);
+      const totalCountTarget = d3.sum(
+        valuesSource,
+        (value) => setsData[source][value]
+      );
+      const numValuesTarget = valuesSource.length;
+      const maxHeightTarget = height * 3 - (numValuesSource - 1);
+
+      const sourceHeight =
+        (setsData[source][d[j][source]] / totalCountSource) * maxHeightSource;
+      const targetHeight =
+        (setsData[target][d[j][target]] / totalCountTarget) * maxHeightTarget;
+
+      const count = d[j]["Count"];
+      console.log(d[j]);
+      console.log("sourceHeight: ", sourceHeight);
+      console.log("targetHeight: ", targetHeight);
+      console.log(count);
+
+      // Este é o y do ponto mais acima do lado do source
+      console.log("ySourceValue: ", ySource[d[j][source]] + 5);
+
+      // Define the vertices of the polygon.
+      const polygonVertices = [
+        { x: x(source) + 10 + 150, y: 5}, // Vertex 1
+        { x: x(source) + 10 + 150, y: 10 }, // Vertex 2
+        { x: x(target) + 150, y: 10 }, // Vertex 3
+        { x: x(target) + 150, y: 5}, // Vertex 4
+      ];
+
+      // Create a group for each attribute
+      const LinkAreaGroup = svg
+        .append("g")
+        .attr("transform", "translate(" + x(source) - 150 + ", 5)");
+
+      // Create a set of Plygnons to link each source to target
+      LinkAreaGroup
+        .append("polygon")
+        .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
+        .attr("fill", "blue");
+    }
   });
 }
 
