@@ -738,6 +738,8 @@ function createPS(data) {
     groupedData.push(attributeData);
   });
 
+  const linkColorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
   groupedData.forEach(function (d, i) {
     // get the values of starting y of each attribute rect
     const ySource = ys[i];
@@ -774,8 +776,8 @@ function createPS(data) {
         (setsData[source][d[j][source]] / totalCountSource) * maxHeightSource;
       const targetHeight =
         (setsData[target][d[j][target]] / totalCountTarget) * maxHeightTarget;
-
       const count = d[j]["Count"];
+
       console.log(d[j]);
       console.log("sourceHeight: ", sourceHeight);
       console.log("targetHeight: ", targetHeight);
@@ -786,284 +788,27 @@ function createPS(data) {
 
       // Define the vertices of the polygon.
       const polygonVertices = [
-        { x: x(source) + 10 + 150, y: 5}, // Vertex 1
-        { x: x(source) + 10 + 150, y: 10 }, // Vertex 2
-        { x: x(target) + 150, y: 10 }, // Vertex 3
-        { x: x(target) + 150, y: 5}, // Vertex 4
+        { x: x(source) + 10 + 150, y: ySource[d[j][source]] + 5}, // Vertex 1
+        { x: x(source) + 10 + 150, y: ySource[d[j][source]] + 5 + sourceHeight }, // Vertex 2 
+        { x: x(target) + 150, y: yTarget[d[j][target]] + 5 + targetHeight }, // Vertex 3
+        { x: x(target) + 150, y: yTarget[d[j][target]] + 5 }, // Vertex 4
       ];
+
+      const linkColor = linkColorScale(j);
+
+      const saturation = count / (totalCountSource + totalCountTarget);
 
       // Create a group for each attribute
       const LinkAreaGroup = svg
         .append("g")
-        .attr("transform", "translate(" + x(source) - 150 + ", 5)");
+        .attr("transform", "translate(${x(source) - 150}, 5)");
 
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
         .append("polygon")
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
-        .attr("fill", "blue");
+        .attr("fill", d3.color(linkColor).brighter(saturation))
+        .attr("stroke", d3.color(linkColor).darker(saturation));
     }
   });
-}
-
-function createParallelSets(data) {
-  // Select the #parallelSets element and append an SVG to it
-  const svg = d3
-    .select("#parallelSets")
-    .append("svg")
-    .attr("height", height + margin.left + margin.right + 50)
-    .attr("width", width + margin.top + margin.bottom + 50)
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-  const nodes = [];
-  const links = [];
-
-  const rapidCharge = { Yes: 0, No: 0 };
-  const bodyStyle = {
-    Sedan: 0,
-    Hatchback: 0,
-    Liftback: 0,
-    SUV: 0,
-    Pickup: 0,
-    MPV: 0,
-    Cabrio: 0,
-    SPV: 0,
-    Station: 0,
-  };
-  const segment = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, N: 0, S: 0 };
-  const powerTrain = { AWD: 0, RWD: 0, FWD: 0 };
-
-  // Count how many times each value appears on each attribute
-  data.forEach((d) => {
-    for (let i = 0; i < axisCombinationSets.length; i++) {
-      const axis = axisCombinationSets[i];
-      if (axis == "RapidCharge") {
-        rapidCharge[d[axis]]++;
-      } else if (axis == "BodyStyle") {
-        bodyStyle[d[axis]]++;
-      } else if (axis == "Segment") {
-        segment[d[axis]]++;
-      } else if (axis == "PowerTrain") {
-        powerTrain[d[axis]]++;
-      }
-    }
-  });
-
-  console.log(rapidCharge);
-  console.log(bodyStyle);
-  console.log(segment);
-  console.log(powerTrain);
-
-  data.forEach((d, i) => {
-    nodes[i] = [];
-
-    for (let j = 0; j < axisCombinationSets.length; j++) {
-      const nodeName = axisCombinationSets[j] + "_" + d[axisCombinationSets[j]];
-      const sourceNode = i === 0 ? null : nodes[i - 1][j];
-      let sourceIndex = -1;
-
-      if (sourceNode) {
-        sourceIndex = nodes[i - 1].indexOf(sourceNode);
-        if (sourceIndex === -1) {
-          sourceIndex = nodes[i - 1].push(nodeName) - 1;
-        }
-      }
-
-      const targetNode = sourceIndex !== -1 ? nodes[i - 1][j] : null;
-      const targetIndex = i === 0 ? -1 : nodes[i].indexOf(nodeName);
-
-      if (targetIndex === -1) {
-        nodes[i].push(nodeName);
-      }
-
-      if (sourceNode && targetNode) {
-        links.push({
-          source: sourceNode,
-          target: targetNode,
-          value: d.count,
-          sourceIndex: sourceIndex,
-          targetIndex: targetIndex,
-        });
-      }
-    }
-
-    nodes.push([
-      `${axisCombinationSets[0]}_${d[axisCombinationSets[0]]}`,
-      `${axisCombinationSets[1]}_${d[axisCombinationSets[1]]}`,
-      `${axisCombinationSets[2]}_${d[axisCombinationSets[2]]}`,
-      `${axisCombinationSets[3]}_${d[axisCombinationSets[3]]}`,
-    ]);
-  });
-
-  const maxLinkValue = d3.max(links, (d) => d.value);
-
-  /*\
-
-  const link = svg
-    .selectAll(".link")
-    .data(links)
-    .enter()
-    .append("path")
-    .attr("class", "link")
-    .attr("d", (d) => {
-      const startIndex = d.sourceIndex * spaceBetweenAxes;
-      const endIndex = d.targetIndex * spaceBetweenAxes;
-
-      return `M ${d.sourceIndex * 5} ${startIndex} L ${d.targetIndex * 5} ${endIndex}`;
-    })
-    .style("stroke", "blue")
-    .style("stroke-width", (d) => (d.value / maxLinkValue) * 10); */
-
-  const padding = 10;
-  const heightSets = 120;
-
-  // Create an axis per attribute and slipt it accordingly the percentage of each value
-  // RapidCharging
-  let i = 0;
-  var availableHeight =
-    heightSets - (Object.keys(rapidCharge).length - 1) * padding;
-  var translation = 0;
-
-  const rapidChargeAxis = svg
-    .append("g")
-    .attr("class", "rapidChargeAxis")
-    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
-
-  for (const value in rapidCharge) {
-    const height = (rapidCharge[value] / data.length) * availableHeight;
-
-    rapidChargeAxis
-      .append("rect")
-      .attr("width", 5)
-      .attr("height", height)
-      .attr("fill", "black")
-      .attr("transform", `translate(0, ${translation})`);
-
-    rapidChargeAxis
-      .append("text")
-      .attr("x", 10)
-      .attr("y", height / 2)
-
-      .attr("text-anchor", "start")
-      .style("fill", "white")
-      .text(value);
-
-    translation += padding + height;
-  }
-
-  // Calculate available height for the "BodyStyle" axis
-  availableHeight = heightSets - (Object.keys(bodyStyle).length - 1) * padding;
-  translation = 0;
-  i++; // Update the index to position the axis correctly
-
-  const bodyStyleAxis = svg
-    .append("g")
-    .attr("class", "bodyStyleAxis")
-    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
-
-  // Create rectangles for each "BodyStyle" value
-  for (const value in bodyStyle) {
-    const height = (bodyStyle[value] / data.length) * availableHeight;
-
-    bodyStyleAxis
-      .append("rect")
-      .attr("width", 5)
-      .attr("height", height)
-      .attr("fill", "black")
-      .attr("transform", `translate(0, ${translation})`);
-
-    bodyStyleAxis
-      .append("text")
-      .attr("x", 10)
-      .attr("y", height / 2)
-      .attr("dy", ".35em")
-      .attr("text-anchor", "start")
-      .style("fill", "white")
-      .text(value);
-
-    translation += padding + height;
-  }
-
-  // Calculate available height for the "Segment" axis
-  availableHeight = heightSets - (Object.keys(segment).length - 1) * padding;
-  translation = 0;
-  i++; // Update the index to position the axis correctly
-
-  const segmentAxis = svg
-    .append("g")
-    .attr("class", "segmentAxis")
-    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
-
-  // Create rectangles for each "Segment" value
-  for (const value in segment) {
-    const height = (segment[value] / data.length) * availableHeight;
-
-    segmentAxis
-      .append("rect")
-      .attr("width", 5)
-      .attr("height", height)
-      .attr("fill", "black")
-      .attr("transform", `translate(0, ${translation})`);
-
-    segmentAxis
-      .append("text")
-      .attr("x", 10)
-      .attr("y", height / 2)
-      .attr("dy", ".35em")
-      .attr("text-anchor", "start")
-      .style("fill", "white")
-      .text(value);
-
-    translation += padding + height;
-  }
-
-  // Calculate available height for the "PowerTrain" axis
-  availableHeight = heightSets - (Object.keys(powerTrain).length - 1) * padding;
-  translation = 0;
-  i++; // Update the index to position the axis correctly
-
-  const powerTrainAxis = svg
-    .append("g")
-    .attr("class", "powerTrainAxis")
-    .attr("transform", `translate(${i * spaceBetweenAxes}, 0)`);
-
-  // Create rectangles for each "PowerTrain" value
-  for (const value in powerTrain) {
-    const height = (powerTrain[value] / data.length) * availableHeight;
-
-    powerTrainAxis
-      .append("rect")
-      .attr("width", 5)
-      .attr("height", height)
-      .attr("fill", "black")
-      .attr("transform", `translate(0, ${translation})`);
-
-    powerTrainAxis
-      .append("text")
-      .attr("x", 10)
-      .attr("y", height / 2)
-      .attr("dy", ".35em")
-      .attr("text-anchor", "start")
-      .style("fill", "white")
-      .text(value);
-
-    translation += padding + height;
-  }
-
-  /*
-  node
-    .append("rect")
-    .attr("width", 10)
-    .attr("height", axisCombinationSets.length * spaceBetweenAxes - 10)
-    .style("fill", "black"); */
-
-  /*node
-    .append("text")
-    .attr("x", 10)
-    .attr("y", axisCombinationSets.length * spaceBetweenAxes * 0.5)
-    .attr("dy", ".35em")
-    .attr("text-anchor", "middle")
-    .style("fill", "white")
-    .text((d) => d.split("_")[1]);*/
 }
