@@ -63,7 +63,7 @@ function startDashboard() {
       //createParallelSets(data);
       createBarChart(data);
       createParallelCoordinates(cleanData);
-      createPS(data);
+      createParallelSets(data);
     })
     .catch((error) => {
       // If there's an error while loading the csv data, log the error.
@@ -594,7 +594,7 @@ function createParallelCoordinates(data) {
   );
 }
 
-function createPS(data) {
+function createParallelSets(data) {
   // Select the #parallelSets element and append an SVG to it
   const svg = d3
     .select("#parallelSets")
@@ -630,7 +630,7 @@ function createPS(data) {
     });
   });
 
-  console.log(setsData);
+  //console.log(setsData);
 
   // Define the x and y positions for the rectangles
   const x = d3.scaleBand().domain(Object.keys(setsData)).range([0, width]);
@@ -696,9 +696,7 @@ function createPS(data) {
 
     ys.push(y);
   });
-  ys.pop();
 
-  console.log(ys);
   const groupedData = [];
 
   // Iterate through the attributes
@@ -738,8 +736,9 @@ function createPS(data) {
     groupedData.push(attributeData);
   });
 
-  const linkColorScale = d3.scaleOrdinal(d3.schemeCategory10);
-
+  const greenColors = ["#669900", "#99cc33", "#ccee66", "#006699", "#3399cc", "#990066", "#cc3399", "#ff6600", "#ff9900", "#ffcc00"];
+  const linkColorScale = d3.scaleOrdinal().range(greenColors);
+  
   const lineGenerator = 
     d3.line()
       .x(function(d) { return d.x; })
@@ -790,7 +789,8 @@ function createPS(data) {
       console.log(count);
 
       // Este é o y do ponto mais acima do lado do source
-      console.log("ySourceValue: ", ySource[d[j][source]] + 5);
+      console.log("d[j][target]: ", d[j][target]);
+      console.log("ySourceValue: ", yTarget[d[j][target]]+ 5);
 
       // Define the vertices of the polygon.
       const polygonVertices = [
