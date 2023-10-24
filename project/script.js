@@ -747,9 +747,15 @@ function createParallelSets(data) {
 
   groupedData.forEach(function (d, i) {
     // get the values of starting y of each attribute rect
-    const ySource = ys[i];
-    const yTarget = ys[i+1];
+    var ySource = { ... ys[i] };
+    var yTarget = { ... ys[i+1] };
 
+    console.log("#################");
+
+    console.log("foraSource: ", ySource);
+    console.log("foraTarget: ", yTarget);
+    
+    console.log("#################");
     const totalValues = data.length;
     
     // iterate over each attribute to draw the polygnon for each link
@@ -784,6 +790,8 @@ function createParallelSets(data) {
       const paintSource = sourceHeight * count / totalCountSource;
       const paintTarget = targetHeight * count / totalCountTarget;
 
+      if (paintSource == 0 || paintTarget == 0) { continue;}
+
       // Define the vertices of the polygon.
       const polygonVertices = [
         { x: x(source) + 10 + 150, y: ySource[d[j][source]] + 5}, // Vertex 1
@@ -793,8 +801,8 @@ function createParallelSets(data) {
       ];
 
       // update yTarget to the next linker
-      console.log("ySource: ", ySource);
-      console.log("yTarget: ", yTarget);
+      console.log("copySource: ", ySource);
+      console.log("copyTarget: ", yTarget);
 
       console.log("paintedSource: ",paintSource);
       console.log("paintedTarget: ", paintTarget);
