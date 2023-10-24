@@ -750,9 +750,7 @@ function createParallelSets(data) {
     const ySource = ys[i];
     const yTarget = ys[i+1];
 
-    console.log("ySource: ", ySource);
-    console.log("yTarget: ", yTarget);
-
+    const totalValues = data.length;
     
     // iterate over each attribute to draw the polygnon for each link
     for (let j = 0; j < d.length; j++) {
@@ -761,44 +759,48 @@ function createParallelSets(data) {
 
       // Source
       const valuesSource = Object.keys(setsData[source]);
-      const totalCountSource = d3.sum(
-        valuesSource,
-        (value) => setsData[source][value]
-      );
+
+      const totalCountSource = setsData[source][d[j][source]]
       const numValuesSource = valuesSource.length;
       const maxHeightSource = height * 3 - (numValuesSource - 1);
 
       // Target
       const valuesTarget = Object.keys(setsData[source]);
-      const totalCountTarget = d3.sum(
-        valuesSource,
-        (value) => setsData[source][value]
-      );
+      const totalCountTarget = setsData[target][d[j][target]];
       const numValuesTarget = valuesSource.length;
       const maxHeightTarget = height * 3 - (numValuesSource - 1);
 
       const sourceHeight =
-        (setsData[source][d[j][source]] / totalCountSource) * maxHeightSource;
+        (setsData[source][d[j][source]] / totalValues) * maxHeightSource;
       const targetHeight =
-        (setsData[target][d[j][target]] / totalCountTarget) * maxHeightTarget;
+        (setsData[target][d[j][target]] / totalValues) * maxHeightTarget;
       const count = d[j]["Count"];
 
-      console.log(d[j]);
-      console.log("sourceHeight: ", sourceHeight);
-      console.log("targetHeight: ", targetHeight);
-      console.log(count);
+      console.log("Source: ", d[j][source]);
+      console.log("Target: ", d[j][target]);
 
-      // Este é o y do ponto mais acima do lado do source
-      console.log("d[j][target]: ", d[j][target]);
-      console.log("ySourceValue: ", yTarget[d[j][target]]+ 5);
+      console.log("height: ", targetHeight, " , count: ", count, " , total: ", totalCountTarget);
+
+      const paintSource = sourceHeight * count / totalCountSource;
+      const paintTarget = targetHeight * count / totalCountTarget;
 
       // Define the vertices of the polygon.
       const polygonVertices = [
         { x: x(source) + 10 + 150, y: ySource[d[j][source]] + 5}, // Vertex 1
-        { x: x(source) + 10 + 150, y: ySource[d[j][source]] + 5 + sourceHeight }, // Vertex 2 
-        { x: x(target) + 150, y: yTarget[d[j][target]] + 5 + targetHeight }, // Vertex 3
-        { x: x(target) + 150, y: yTarget[d[j][target]] + 5 }, // Vertex 4
+        { x: x(source) + 10 + 150, y: ySource[d[j][source]] + paintSource + 5}, // Vertex 2 
+        { x: x(target) + 150, y: yTarget[d[j][target]] + paintTarget + 5}, // Vertex 3
+        { x: x(target) + 150, y: yTarget[d[j][target]] + 5}, // Vertex 4
       ];
+
+      // update yTarget to the next linker
+      console.log("ySource: ", ySource);
+      console.log("yTarget: ", yTarget);
+
+      console.log("paintedSource: ",paintSource);
+      console.log("paintedTarget: ", paintTarget);
+
+      ySource[d[j][source]] += paintSource;
+      yTarget[d[j][target]] += paintTarget;
 
       const linkColor = linkColorScale(j);
 
@@ -811,8 +813,7 @@ function createParallelSets(data) {
 
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
-        .append("path")
-        .attr("d", lineGenerator(polygonVertices))
+        .append("polygon")
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
         .attr("fill", d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
         .attr("stroke", d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }));
