@@ -272,3 +272,103 @@ function updateParallelCoordsLines(data) {
     }})
 
 }
+
+function updateParallelSets(data) {
+  const svg = d3.select("#parallelSets").select("svg").select("g");
+
+  console.log("size ", svg.size());
+
+  const nominalAttributes = data.map(function (d) {
+    return {
+      RapidCharge: d.RapidCharge,
+      BodyStyle: d.BodyStyle,
+      Segment: d.Segment,
+      PowerTrain: d.PowerTrain,
+    };
+  });
+
+  const setsData = {};
+
+  Object.keys(nominalAttributes[0]).forEach(function (attribute) {
+    setsData[attribute] = {};
+  });
+
+  nominalAttributes.forEach(function (d) {
+    Object.keys(d).forEach(function (attribute) {
+      const value = d[attribute];
+      if (!setsData[attribute][value]) {
+        setsData[attribute][value] = 1;
+      } else {
+        setsData[attribute][value]++;
+      }
+    });
+  });
+
+  console.log("setsData: ", setsData);
+
+  // Define the x and y positions for the rectangles
+  const x = d3
+    .scalePoint()
+    .range([0, width])
+    .padding(0.08)
+    .domain(Object.keys(setsData));
+
+  const ys = [];
+
+  // Iterate through the attributes
+  Object.keys(setsData).forEach(function (attribute) {
+    const y = {};
+    const values = Object.keys(setsData[attribute]);
+    const numValues = values.length;
+    console.log("num: ", numValues);
+
+    const rectWidth = 10;
+
+    const totalCount = d3.sum(values, (value) => setsData[attribute][value]);
+    const maxHeight = height * 3 - (numValues - 1);
+
+    console.log("total: ", totalCount)
+
+    // Create a group for each attribute
+    const attributeGroup = svg.selectAll(".attributeGroup").data(values);
+    attributeGroup.exit().remove();
+
+    console.log("attribue: ", attribute, " x: ", x(attribute));
+
+    attributeGroup
+      .append("rect")
+      .attr("class", "attributeGroup")
+      .attr("x", x(attribute) + 20)
+      .attr("y", function (d, i) {
+        console.log("d: ", d, ", i: ", i);
+        if (i === 0) {
+          y[d] = 0;
+          console.log("y[d]: ", y[d]);
+          return 0;
+        }
+        const prevHeight = d3.sum(
+          values
+            .slice(0, i)
+            .map(function (value) { return (setsData[attribute][value] / totalCount) * maxHeight;
+          })
+        );
+        y[d] = prevHeight + i;
+        console.log("y[d]: ", y[d]);
+        return prevHeight + i;
+      })
+      .attr("width", rectWidth)
+      .attr("height", function (value) {
+        console.log("value: ", setsData[attribute][value]);
+        console.log("height: ", (setsData[attribute][value] / totalCount) * maxHeight);
+        return (setsData[attribute][value] / totalCount) * maxHeight;
+      })
+      .style("fill", "black")
+      .style("opacity", 0.75);
+
+    console.log("y: ", y);
+    ys.push(y);
+  }); 
+
+  console.log(ys);
+
+}

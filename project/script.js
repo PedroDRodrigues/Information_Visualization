@@ -554,6 +554,7 @@ function createParallelCoordinates(data) {
           return d3.select(this).style("opacity") == 0.7;
         })._groups[0];
         updateBarChart(lines.map((d) => d.__data__));
+        updateParallelSets(lines.map((d) => d.__data__));
       })
   );
 
@@ -590,6 +591,7 @@ function createParallelCoordinates(data) {
           return d3.select(this).style("opacity") == 0.7;
         })._groups[0];
         updateBarChart(lines.map((d) => d.__data__));
+        updateParallelSets(lines.map((d) => d.__data__));
       })
   );
 }
@@ -629,17 +631,14 @@ function createParallelSets(data) {
       }
     });
   });
-
-  //console.log(setsData);
-
+ 
   // Define the x and y positions for the rectangles
-  //const x = d3.scaleBand().domain(Object.keys(setsData)).range([0, width]);
 
   const x = d3
-  .scalePoint()
-  .range([0, width])
-  .padding(0.08)
-  .domain(Object.keys(setsData));
+    .scalePoint()
+    .range([0, width])
+    .padding(0.08)
+    .domain(Object.keys(setsData));
 
   const ys = [];
 
@@ -660,10 +659,11 @@ function createParallelSets(data) {
 
     // Create a set of rectangles for each attribute
     attributeGroup
-      .selectAll(".rect")
+      .selectAll(".attributeGroup")
       .data(values)
       .enter()
       .append("rect")
+      .attr("class", "attributeGroup")
       .attr("x", 20)
       .attr("y", function (d, i) {
         if (i === 0) {
@@ -783,11 +783,6 @@ function createParallelSets(data) {
         (setsData[target][d[j][target]] / totalValues) * maxHeightTarget;
       const count = d[j]["Count"];
 
-      console.log("Source: ", d[j][source]);
-      console.log("Target: ", d[j][target]);
-
-      console.log("height: ", targetHeight, " , count: ", count, " , total: ", totalCountTarget);
-
       const paintSource = sourceHeight * count / totalCountSource;
       const paintTarget = targetHeight * count / totalCountTarget;
 
@@ -802,12 +797,6 @@ function createParallelSets(data) {
       ];
 
       // update yTarget to the next linker
-      console.log("copySource: ", ySource);
-      console.log("copyTarget: ", yTarget);
-
-      console.log("paintedSource: ",paintSource);
-      console.log("paintedTarget: ", paintTarget);
-
       ySource[d[j][source]] += paintSource;
       yTarget[d[j][target]] += paintTarget;
 
