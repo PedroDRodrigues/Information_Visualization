@@ -633,7 +633,13 @@ function createParallelSets(data) {
   //console.log(setsData);
 
   // Define the x and y positions for the rectangles
-  const x = d3.scaleBand().domain(Object.keys(setsData)).range([0, width]);
+  //const x = d3.scaleBand().domain(Object.keys(setsData)).range([0, width]);
+
+  const x = d3
+  .scalePoint()
+  .range([0, width])
+  .padding(0.08)
+  .domain(Object.keys(setsData));
 
   const ys = [];
 
@@ -650,7 +656,7 @@ function createParallelSets(data) {
     // Create a group for each attribute
     const attributeGroup = svg
       .append("g")
-      .attr("transform", "translate(" + x(attribute) + ", 5)");
+      .attr("transform", "translate(" + x(attribute) + ", 20)");
 
     // Create a set of rectangles for each attribute
     attributeGroup
@@ -658,7 +664,7 @@ function createParallelSets(data) {
       .data(values)
       .enter()
       .append("rect")
-      .attr("x", 150)
+      .attr("x", 20)
       .attr("y", function (d, i) {
         if (i === 0) {
           y[d] = 0;
@@ -677,7 +683,8 @@ function createParallelSets(data) {
       .attr("height", function (value) {
         return (setsData[attribute][value] / totalCount) * maxHeight;
       })
-      .style("fill", "green")
+      .style("fill", "black")
+      .style("opacity", 0.75)
       .on("mouseover", function (event, d) {
         showSetsTooltip(event, d);
       })
@@ -688,7 +695,7 @@ function createParallelSets(data) {
     // Add labels to the attribute group
     attributeGroup
       .append("text")
-      .attr("x", rectWidth / 2 + 150)
+      .attr("x", rectWidth / 2 + 20)
       .attr("y", -10)
       .attr("text-anchor", "middle")
       .style("font-size", "12px")
@@ -750,12 +757,6 @@ function createParallelSets(data) {
     var ySource = { ... ys[i] };
     var yTarget = { ... ys[i+1] };
 
-    console.log("#################");
-
-    console.log("foraSource: ", ySource);
-    console.log("foraTarget: ", yTarget);
-    
-    console.log("#################");
     const totalValues = data.length;
     
     // iterate over each attribute to draw the polygnon for each link
@@ -792,12 +793,12 @@ function createParallelSets(data) {
 
       if (paintSource == 0 || paintTarget == 0) { continue;}
 
-      // Define the vertices of the polygon.
+      // Define the vertice s of the polygon.
       const polygonVertices = [
-        { x: x(source) + 10 + 150, y: ySource[d[j][source]] + 5}, // Vertex 1
-        { x: x(source) + 10 + 150, y: ySource[d[j][source]] + paintSource + 5}, // Vertex 2 
-        { x: x(target) + 150, y: yTarget[d[j][target]] + paintTarget + 5}, // Vertex 3
-        { x: x(target) + 150, y: yTarget[d[j][target]] + 5}, // Vertex 4
+        { x: x(source) + 10 + 20, y: ySource[d[j][source]] + 20}, // Vertex 1
+        { x: x(source) + 10 + 20, y: ySource[d[j][source]] + paintSource + 20}, // Vertex 2 
+        { x: x(target) + 20, y: yTarget[d[j][target]] + paintTarget + 20}, // Vertex 3
+        { x: x(target) + 20, y: yTarget[d[j][target]] + 20}, // Vertex 4
       ];
 
       // update yTarget to the next linker
