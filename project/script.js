@@ -743,8 +743,8 @@ function createParallelSets(data) {
     groupedData.push(attributeData);
   });
 
-  const greenColors = ["#669900", "#99cc33", "#ccee66", "#006699", "#3399cc", "#990066", "#cc3399", "#ff6600", "#ff9900", "#ffcc00"];
-  const linkColorScale = d3.scaleOrdinal().range(greenColors);
+  const multipleColors = ["#669900", "#99cc33", "#ccee66", "#006699", "#3399cc", "#990066", "#cc3399", "#ff6600", "#ff9900", "#ffcc00"];
+  const linkColorScale = d3.scaleOrdinal().range(multipleColors);
   
   const lineGenerator = 
     d3.line()
@@ -812,6 +812,7 @@ function createParallelSets(data) {
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
         .append("polygon")
+        .attr("class", "linkAreaGroup")
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
         .attr("fill", d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
         .attr("stroke", d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }));

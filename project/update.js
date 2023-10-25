@@ -313,6 +313,7 @@ function updateParallelSets(data) {
 
   const ys = [];
   var attributeGroup = svg.selectAll("rect.attributeGroup").remove();
+  var LinkAreaGroup = svg.selectAll(".linkAreaGroup").remove();  
 
   // Iterate through the attributes
   Object.keys(setsData).forEach(function (attribute) {
@@ -326,12 +327,7 @@ function updateParallelSets(data) {
     const totalCount = d3.sum(values, (value) => setsData[attribute][value]);
     const maxHeight = height * 3 - (numValues - 1);
 
-    console.log("total: ", totalCount)
-
-    // Create a group for each attribute
-
-    //attributeGroup.selectAll("rect").remove();
-
+    // Rereate a group for each attribute
     attributeGroup = svg
     .append("g")
     .attr("transform", "translate(" + x(attribute) + ", 20)");
@@ -376,11 +372,125 @@ function updateParallelSets(data) {
         hideTooltip();
       });
 
-    console.log("y: ", y);
     ys.push(y);
   }); 
-  
 
-  //console.log(ys);
+  const groupedData = [];
+
+  // Iterate through the attributes
+  Object.keys(setsData).forEach(function (attribute, index, attributes) {
+    if (attribute == "PowerTrain") {
+      return;
+    }
+    const values = Object.keys(setsData[attribute]);
+
+    // Create a set of rectangles for each attribute with proportional heights
+    const attributeData = [];
+    values.forEach(function (value, i) {
+      const valueCount = setsData[attribute][value];
+      const nextAttribute = attributes[index + 1];
+
+      if (nextAttribute) {
+        const nextAttributeValues = Object.keys(setsData[nextAttribute]);
+        nextAttributeValues.forEach(function (nextValue) {
+          const modelsWithNextValue = data.filter(
+            (d) => d[attribute] === value && d[nextAttribute] === nextValue
+          );
+          const count = modelsWithNextValue.length;
+          attributeData.push({
+            [attribute]: value,
+            [nextAttribute]: nextValue,
+            Count: count,
+          });
+        });
+      } else {
+        // If this is the last attribute, add a data point for the current attribute value
+        attributeData.push({
+          [attribute]: value,
+          Count: valueCount,
+        });
+      }
+    });
+    groupedData.push(attributeData);
+  });
+
+  console.log("groupedDaata: ", groupedData);
+
+  const multipleColors = ["#669900", "#99cc33", "#ccee66", "#006699", "#3399cc", "#990066", "#cc3399", "#ff6600", "#ff9900", "#ffcc00"];
+  const linkColorScale = d3.scaleOrdinal().range(multipleColors);
+
+  const lineGenerator = d3.line()
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; })
+    .curve(d3.curveBasis);
+
+
+  groupedData.forEach(function (d, i) {
+    // get the values of starting y of each attribute rect
+    var ySource = { ... ys[i] };
+    var yTarget = { ... ys[i+1] };
+
+    const totalValues = data.length;
+    
+    // iterate over each attribute to draw the polygnon for each link
+    for (let j = 0; j < d.length; j++) {
+      const source = Object.keys(setsData)[i];
+      const target = Object.keys(setsData)[i + 1];
+
+      // Source
+      const valuesSource = Object.keys(setsData[source]);
+
+      const totalCountSource = setsData[source][d[j][source]]
+      const numValuesSource = valuesSource.length;
+      const maxHeightSource = height * 3 - (numValuesSource - 1);
+
+      // Target
+      const valuesTarget = Object.keys(setsData[source]);
+      const totalCountTarget = setsData[target][d[j][target]];
+      const numValuesTarget = valuesSource.length;
+      const maxHeightTarget = height * 3 - (numValuesSource - 1);
+
+      const sourceHeight =
+        (setsData[source][d[j][source]] / totalValues) * maxHeightSource;
+      const targetHeight =
+        (setsData[target][d[j][target]] / totalValues) * maxHeightTarget;
+      const count = d[j]["Count"];
+
+      const paintSource = sourceHeight * count / totalCountSource;
+      const paintTarget = targetHeight * count / totalCountTarget;
+
+      if (paintSource == 0 || paintTarget == 0) { continue;}
+
+      // Define the vertice s of the polygon.
+      const polygonVertices = [
+        { x: x(source) + 10 + 20, y: ySource[d[j][source]] + 20}, // Vertex 1
+        { x: x(source) + 10 + 20, y: ySource[d[j][source]] + paintSource + 20}, // Vertex 2 
+        { x: x(target) + 20, y: yTarget[d[j][target]] + paintTarget + 20}, // Vertex 3
+        { x: x(target) + 20, y: yTarget[d[j][target]] + 20}, // Vertex 4
+      ];
+
+      // update yTarget to the next linker
+      ySource[d[j][source]] += paintSource;
+      yTarget[d[j][target]] += paintTarget;
+
+      const linkColor = linkColorScale(j);
+
+      const saturation = count / (totalCountSource + totalCountTarget);
+      
+      // Create a group for each attribute
+      LinkAreaGroup = svg
+        .append("g")
+        .attr("transform", "translate(${x(source) - 150}, 5)")
+        .attr("class", "linkAreaGroup");
+
+      // Create a set of Plygnons to link each source to target
+      LinkAreaGroup
+        .append("polygon")
+        .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
+        .attr("fill", d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
+        .attr("stroke", d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }));
+      } 
+
+    });
 
 }
