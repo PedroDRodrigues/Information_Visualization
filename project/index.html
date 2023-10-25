@@ -10,10 +10,11 @@
         justify-content: center;
         align-items: center;
         gap: 5px;
-        padding: 5px;
+        padding: 10px;
       }
       .visualization {
-        padding: 2px;
+        padding: 0px;
+        position: relative;
       }
       .tooltip {
         position: absolute;
@@ -27,16 +28,37 @@
         font-size: 12px;
         z-index: 999;
       }
+      .text-overlay {
+        font-weight: bold;
+        position: absolute; /* Position the text absolutely within the container */
+        top: 10px; /* Adjust the top position as needed */
+        right: 150px; /* Adjust the left position as needed */
+        z-index: 1; /* Ensure the text is above the plot (increase as needed) */
+        font-family: "Arial";
+        font-size: 32px; /* Set the font size */
+        color: #036000; /* Set the text color */
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Add a text shadow */
+        padding: 12.5px; /* Add padding to the text */
+      }
+      .parallelSetsContainer {
+        background-color: rgb(67, 19, 19);
+        border: 1px solid grey;
+        padding: 10px;
+        margin: 0;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        width: 200%;
+      }
     </style>
     <!-- Load the D3.js library for data visualization -->
     <script src="https://d3js.org/d3.v7.js"></script>
-    <!-- Load JavaScript files for the dashboard --> 
-    <script src="script.js"></script> 
+    <!-- Load JavaScript files for the dashboard -->
+    <script src="script.js"></script>
     <script src="linked.js"></script>
     <script src="update.js"></script>
   </head>
   <!-- Start the dashboard upon page load -->
-  <body onload="startDashboard()">
+  <body onload="startDashboard()" style="background-color: white;">
     <!-- Buttons to update the data visualization -->
     <!--
     <div class="button-container">
@@ -48,15 +70,15 @@
     <!-- The main grid layout of the dashboard -->
     <div class="dashboard">
       <!-- Visualization area for the bar chart -->
-      <div class="visualization" id="barChart"></div>
+      <div class="visualization" id="barChart" style="background-color: #f8fcf4; text-align: center; margin: 0 auto; height: auto; width: 100%; border: 0.5px solid black; padding: 5px; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);">
+        <div class="text-overlay">ELECTRIC VEHICLES</div>
+      </div>
       <!-- Visualization area for the parallel sets plot -->
-      <div class="visualization" id="parallelSets"></div>
+      <div class="visualization" id="parallelSets" style="background-color: #e9f5db; text-align: center; margin: 0 auto; width: 100%; border: 0.5px solid black; padding: 5px; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);"></div>
       <!-- Visualization area for the parallel coordinates plot -->
-      <div class="visualization" id="parallelCoords"></div>
+      <div class="visualization" id="parallelCoords" style="background-color: #f8fcf4; text-align: center; margin: 0 auto; height: auto; width: 100%; border: 0.5px solid black; padding: 5px; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);"></div>
     </div>
     <!-- Additional HTML for Tooltip and Drawer -->
-    <div id="tooltip" class="tooltip">
-      <span id="yValue"></span><br />
-    </div>
+    <div id="tooltip" class="tooltip"><span id="yValue"></span><br /></div>
   </body>
 </html>
