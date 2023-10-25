@@ -685,10 +685,15 @@ function createParallelSets(data) {
       })
       .style("fill", "black")
       .style("opacity", 0.75)
+      .on("click", function (event, d) {
+        clickSetAttribute(d3.select(this)._groups[0][0], attribute);
+      })
       .on("mouseover", function (event, d) {
+        //highlightSetAttribute();
         showSetsTooltip(event, d);
       })
       .on("mouseout", function (event, d) {
+        //resetSetAttribute();
         hideTooltip();
       });
 
@@ -800,22 +805,31 @@ function createParallelSets(data) {
       ySource[d[j][source]] += paintSource;
       yTarget[d[j][target]] += paintTarget;
 
-      const linkColor = linkColorScale(j);
+      const linkColor = linkColorScale(i);
 
       const saturation = count / (totalCountSource + totalCountTarget);
 
       // Create a group for each attribute
       const LinkAreaGroup = svg
-        .append("g")
-        .attr("transform", "translate(${x(source) - 150}, 5)");
+        .append("g");
 
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
         .append("polygon")
+        .data([d[j]])
         .attr("class", "linkAreaGroup")
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
-        .attr("fill", d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
-        .attr("stroke", d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }));
+        .attr("fill", "green")//d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
+        .attr("stroke", "black")//d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }))
+        .on("click", function(event, d) {
+          //clickSetValue();
+        })
+        .on("mouseover", function (event, d) {
+          //highlightSetValue();
+        })
+        .on("mouseout", function(event, d) {
+          //resetSetValue();
+        });
       }
 
   });

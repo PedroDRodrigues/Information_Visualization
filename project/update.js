@@ -1,21 +1,25 @@
 var selectedBrand = null;
 
+var selectedValue = null;
+var targetAttributes = new Set();
+var targetValues = new Set();
+
 const selectedColor = "#fc8d62";
 const hoveredColor = "#1f78b4";
 
 const colorScale = d3.scaleQuantize([2, 7], d3.schemeGreens[6]);
 
-function resetHighlightedBrand(clickedBar) {
+function resetHighlightedBrand() {
   d3.selectAll(".bar")
     .filter(function (d) {
-      return d.Brand == clickedBar.Brand;
+      return d.Brand == selectedBrand;
     })
     .attr("stroke", "black")
     .attr("stroke-width", 0.5);
 
   d3.selectAll(".lines")
     .filter(function (d) {
-      return d.Brand == clickedBar.Brand;
+      return d.Brand == selectedBrand;
     })
     .attr("stroke", colorScale(5));
 }
@@ -25,14 +29,12 @@ function updateHighlightedBrandClick(clickedBar) {
 
   // de-select brand
   if (selectedBrand == brand) {
+    resetHighlightedBrand();
     selectedBrand = null;
-    resetHighlightedBrand(clickedBar);
   } else {
     // select new brand
     if (selectedBrand != null) {
-      console.log(selectedBrand)
-      const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0];
-      if (bar != undefined) { resetHighlightedBrand(bar.__data__); }
+      resetHighlightedBrand();
     }
     selectedBrand = brand;
     d3.selectAll(".bar")
@@ -473,24 +475,143 @@ function updateParallelSets(data) {
       ySource[d[j][source]] += paintSource;
       yTarget[d[j][target]] += paintTarget;
 
-      const linkColor = linkColorScale(j);
+      const linkColor = linkColorScale(i);
 
       const saturation = count / (totalCountSource + totalCountTarget);
       
       // Create a group for each attribute
       LinkAreaGroup = svg
         .append("g")
-        .attr("transform", "translate(${x(source) - 150}, 5)")
+        //.attr("transform", "translate(${x(source) - 150}, 5)")
         .attr("class", "linkAreaGroup");
 
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
         .append("polygon")
+        .data([d[j]])
+        .attr("class", "linkAreaGroup")
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
-        .attr("fill", d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
-        .attr("stroke", d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }));
+        .attr("fill", "green")//d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
+        .attr("stroke", "black")//d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }))
+        .on("mouseover", function (event, d) {
+          console.log(d3.select(this)._groups[0][0].__data__)
+          //showSetsTooltip();
+        });
       } 
 
     });
 
+}
+/*
+function highlightedSet(clickedSet) {
+  var set = clickedSet;
+  var sourceAttribute = Object.keys(clickedSet)[0];
+  var sourceValue = clickedSet[sourceAttribute];
+  var targetAttribute = Object.keys(clickedSet)[1];
+  var targetValue = clickedSet[targetAttribute];
+
+  // de-select set
+  if (selectedSet == set) {
+    selectedSet = null;
+    console.log("de-select", set)
+
+    d3.selectAll(".linkAreaGroup")
+      .filter(function (d) {
+        return d[sourceAttribute] == sourceValue && d[targetAttribute] == targetValue;
+      })
+      .attr("fill", "green")
+      .attr("stroke-width", 1);
+
+  } else {
+    // select new brand
+    if (selectedSet != null) {
+      //const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0];
+      //if (bar != undefined) { resetHighlightedBrand(bar.__data__); }
+    }
+    selectedSet = set;
+    console.log("new", selectedSet)
+
+    d3.selectAll(".linkAreaGroup")
+      .filter(function (d) {
+        //return d[sourceAttribute] == sourceValue && d[targetAttribute] == targetValue;
+      })
+      .attr("fill", "black")
+      .attr("stroke-width", 2.5);
+
+  }
+}
+*/
+function resetHighlightedAttribute(attribute) {
+  d3.selectAll(".linkAreaGroup")
+    .filter(function (d) {
+      return d[attribute] != selectedValue;
+    })
+    .attr("opacity", 1);
+  
+  d3.selectAll(".attributeGroup")
+    .filter(function (d) {
+      return !targetValues.has(d);
+    })
+    .style("opacity", 0.75);
+  
+  targetAttributes = new Set();
+  targetValues = new Set();
+}
+
+function highlightSetAttribute(attribute, value) {
+  // links
+  const links = d3.selectAll(".linkAreaGroup")
+      .filter(function (d) {
+        return d[attribute] == value;
+      });
+  const linksData = links._groups[0].map(link => link.__data__);
+  
+  // get different attributes (targets)
+  linksData.forEach(link => {
+    for (const key in link) {
+        if (key != attribute && key != "Count") {
+            targetAttributes.add(key);
+        }
+    }
+  });
+  //console.log("target attributes", targetAttributes)
+
+  // get all different values (targets)
+  targetAttributes.forEach(attribute => {
+    linksData.forEach(link => {
+      if (link.hasOwnProperty(attribute)) {
+          targetValues.add(link[attribute]);
+      }
+    });
+  });
+  targetValues.add(value);
+  //console.log(targetValues)
+
+  // attribute
+  d3.selectAll(".attributeGroup")
+    .filter(function (d) {
+      return !targetValues.has(d);
+    })
+    .style("opacity", 0.25);
+
+  d3.selectAll(".linkAreaGroup")
+    .filter(function (d) {
+      return d[attribute] != value;
+    })
+    .attr("opacity", 0.25);
+}
+
+function clickSetAttribute(set, attribute) {
+  const value = set.__data__;
+  if (selectedValue == value) {
+    resetHighlightedAttribute(attribute);
+    selectedValue = null;
+  } else {
+    if (selectedValue != null) {
+      // test this
+      resetHighlightedAttribute(attribute);
+    }
+    selectedValue = value;
+    highlightSetAttribute(attribute, value);
+  }
 }
