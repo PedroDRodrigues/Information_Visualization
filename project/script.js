@@ -241,7 +241,7 @@ function createParallelCoordinates(data) {
     .attr("width", width + margin.left + margin.right + 50)
     .attr("height", height * 3 + margin.top + margin.bottom + 50)
     .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top + 30})`);
 
   // For each dimension, build a linear scale.
   const xScale = d3
