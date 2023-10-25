@@ -276,8 +276,6 @@ function updateParallelCoordsLines(data) {
 function updateParallelSets(data) {
   const svg = d3.select("#parallelSets").select("svg").select("g");
 
-  console.log("size ", svg.size());
-
   const nominalAttributes = data.map(function (d) {
     return {
       RapidCharge: d.RapidCharge,
@@ -320,7 +318,7 @@ function updateParallelSets(data) {
     const y = {};
     const values = Object.keys(setsData[attribute]);
     const numValues = values.length;
-    console.log("num: ", numValues);
+    console.log("num: ", numValues, ", values: ", values);
 
     const rectWidth = 10;
 
@@ -330,15 +328,21 @@ function updateParallelSets(data) {
     console.log("total: ", totalCount)
 
     // Create a group for each attribute
-    const attributeGroup = svg.selectAll(".attributeGroup").data(values);
-    attributeGroup.exit().remove();
+    var attributeGroup = svg.selectAll("rect.attributeGroup").remove();
+    //attributeGroup.selectAll("rect").remove();
 
-    console.log("attribue: ", attribute, " x: ", x(attribute));
+    attributeGroup = svg
+    .append("g")
+    .attr("transform", "translate(" + x(attribute) + ", 20)");
+    //console.log("attribue: ", attribute, " x: ", x(attribute));
 
     attributeGroup
+      .selectAll(".attributeGroup")
+      .data(values)
+      .enter()
       .append("rect")
       .attr("class", "attributeGroup")
-      .attr("x", x(attribute) + 20)
+      .attr("x", 20)
       .attr("y", function (d, i) {
         console.log("d: ", d, ", i: ", i);
         if (i === 0) {
@@ -363,12 +367,19 @@ function updateParallelSets(data) {
         return (setsData[attribute][value] / totalCount) * maxHeight;
       })
       .style("fill", "black")
-      .style("opacity", 0.75);
+      .style("opacity", 0.75)
+      .on("mouseover", function (event, d) {
+        showSetsTooltip(event, d);
+      })
+      .on("mouseout", function (event, d) {
+        hideTooltip();
+      });
 
     console.log("y: ", y);
     ys.push(y);
   }); 
+  
 
-  console.log(ys);
+  //console.log(ys);
 
 }
