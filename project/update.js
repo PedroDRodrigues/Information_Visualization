@@ -312,6 +312,7 @@ function updateParallelSets(data) {
     .domain(Object.keys(setsData));
 
   const ys = [];
+  var attributeGroup = svg.selectAll("rect.attributeGroup").remove();
 
   // Iterate through the attributes
   Object.keys(setsData).forEach(function (attribute) {
@@ -328,7 +329,7 @@ function updateParallelSets(data) {
     console.log("total: ", totalCount)
 
     // Create a group for each attribute
-    var attributeGroup = svg.selectAll("rect.attributeGroup").remove();
+
     //attributeGroup.selectAll("rect").remove();
 
     attributeGroup = svg
