@@ -577,7 +577,7 @@ function createParallelCoordinates(data) {
         );
         ymax ? (ymax = ymax) : (ymax = 0);
 
-        y > ymax ? (y = y) : (y = ymax);
+        y > ymax ? (y = y + 5) : (y = ymax + 5);
         y > height * 3 ? (y = height * 3) : (y = y);
 
         d3.select(this)
