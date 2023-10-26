@@ -158,6 +158,8 @@ function createBarChart(data) {
     .attr("stroke", "black")
     .attr("stroke-width", 0.5)
     .on("click", function (d) {
+      console.log(d.target.__data__.Brand)
+      // GET LINES WITH OPACITY > 0.7
       updateHighlightedBrandClick(d.target.__data__);
     })
     .on("mouseover", function (event, d) {
@@ -294,7 +296,7 @@ function createParallelCoordinates(data) {
     )
     .attr("fill", "none")
     .attr("stroke", color)
-    .attr("opacity", 0.6);
+    .attr("opacity", 0.7);
 
   // Draw the axis
   const axisGroups = svg
@@ -550,6 +552,7 @@ function createParallelCoordinates(data) {
         updateParallelCoordsLines(data);
       })
       .on("end", function (event, d) {
+        // PROBABLY DO THIS FOR EVERY UPDATE, GET THE DATA FROM THE LINES WITH OPACITY > 0.7 (0.7 GREEN 1 ORANGE/BLUE)
         lines = d3.selectAll(".lines").filter(function (d) {
           return d3.select(this).style("opacity") == 0.7;
         })._groups[0];
@@ -686,6 +689,7 @@ function createParallelSets(data) {
       .style("fill", "black")
       .style("opacity", 0.75)
       .on("click", function (event, d) {
+        // UPDATE BAR CHART AND PARALLEL SETS, GET DATA FROM LINES WITH VALUE SELECTED
         clickSetAttribute(d3.select(this)._groups[0][0], attribute);
       })
       .on("mouseover", function (event, d) {

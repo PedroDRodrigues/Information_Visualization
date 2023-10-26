@@ -16,12 +16,20 @@ function resetHighlightedBrand() {
     })
     .attr("stroke", "black")
     .attr("stroke-width", 0.5);
-
+  
+  // reset stroke collor
   d3.selectAll(".lines")
     .filter(function (d) {
       return d.Brand == selectedBrand;
     })
     .attr("stroke", colorScale(5));
+  
+  // reset opacity (different filter)
+  d3.selectAll(".lines")
+    .filter(function (d) {
+      return d.Brand == selectedBrand && d3.select(this).style("opacity") >= 0.7;
+    })
+    .attr("opacity", 0.7);
 }
 
 function updateHighlightedBrandClick(clickedBar) {
@@ -43,12 +51,18 @@ function updateHighlightedBrandClick(clickedBar) {
       })
       .attr("stroke", selectedColor)
       .attr("stroke-width", 2.5);
-    
+
     d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
       .attr("stroke", selectedColor);
+    
+    d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == brand && d3.select(this).style("opacity") >= 0.7;
+      })
+      .attr("opacity", 1);
   }
 }
 
@@ -67,6 +81,12 @@ function updateHighlightedBrandMouseOver(hoveredBar) {
         return d.Brand == brand;
       })
       .attr("stroke", hoveredColor);
+
+    d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == brand && d3.select(this).style("opacity") >= 0.7;
+      })
+      .attr("opacity", 1);
   }
 }
 
@@ -85,6 +105,12 @@ function updateHighlightedBrandMouseOut(hoveredBar) {
         return d.Brand == brand;
       })
       .attr("stroke", colorScale(5));
+
+    d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == selectedBrand && d3.select(this).style("opacity") >= 0.7;
+      })
+      .attr("opacity", 0.7);
   }
 }
 
@@ -238,7 +264,7 @@ function updateParallelCoordsLines(data) {
       }
       return false;
     })
-    .attr("opacity", 0.05);
+    .attr("opacity", 0.20);
 
   svg
     .selectAll(".lines")
@@ -255,7 +281,7 @@ function updateParallelCoordsLines(data) {
     })
     .attr("opacity", 0.7);
 
-  const filteredLines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") == 0.7); })._groups[0];
+  const filteredLines = d3.selectAll(".lines").filter(function (d) { return (d3.select(this).style("opacity") >= 0.7); })._groups[0];
   const filteredData = filteredLines.map(d => d.__data__);
 
   // Calculate the mean values of each attribute
