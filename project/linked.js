@@ -41,7 +41,6 @@ function updateAxisCombination() {
 
 function showTooltip(event, item, yScale) {
     const mouseY = event.clientY - 601;
-    console.log(event.clientY)
     if (mouseY > 0 && mouseY < 240 || mouseY == 0 || mouseY == 240) {
       const yValue = document.getElementById("yValue");
       yValue.textContent = Math.round(yScale[item].invert(mouseY)).toLocaleString("en-US");
@@ -57,7 +56,7 @@ function hideTooltip() {
     tooltip.style.display = 'none';
 }
 
-function showBarTooltip(event, item, x, y) {
+function showBarTooltip(event, item) {
   const yValue = document.getElementById("yValue");
   yValue.textContent = item.Count;
   tooltip.style.left = (event.pageX + 7.5) + "px";
@@ -65,9 +64,9 @@ function showBarTooltip(event, item, x, y) {
   tooltip.style.display = "block";
 }
 
-function showSetsTooltip(event, item) {
+function showSetsTooltip(event, item, count) {
   const yValue = document.getElementById("yValue");
-  yValue.textContent = item;
+  yValue.textContent = item + ", Item Count: "+ count;
   tooltip.style.left = (event.pageX + 7.5) + "px";
   tooltip.style.top = (event.pageY - 10) + "px";
   tooltip.style.display = "block";

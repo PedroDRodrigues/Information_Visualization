@@ -154,7 +154,7 @@ function getFilteredLines(data) {
 }
 
 function updateBarChart(data) {
-  var originalData = data;
+  var filteredData;
   if (selectedValue != null) {
     // lines with alluvial filter
     const lines = d3.selectAll(".lines")
@@ -162,10 +162,11 @@ function updateBarChart(data) {
         return d[selectedAttribute] == selectedValue;
       });
     const linesData = lines._groups[0].map((d) => d.__data__);
-    const filteredData = getFilteredLines(linesData);
-    data = filteredData;
+    filteredData = getFilteredLines(linesData);
   } else {
+    filteredData = getFilteredLines(data);
   }
+  data = filteredData;
 
 
   // Select the SVG element of the bar chart
@@ -255,7 +256,7 @@ function updateBarChart(data) {
     .attr("x", width - margin.right - 60)
     .attr("y", 145)
     .attr("text-anchor", "middle")
-    .text((currentModels / totalModels).toFixed(2) * 100 + "% models");
+    .text(((currentModels / totalModels).toFixed(2) * 100).toFixed(0) + "% models");
 
   svg
     .selectAll(".bar")
@@ -356,6 +357,7 @@ function updateParallelCoordsLines(data) {
 }
 
 function updateParallelSets(data) {
+  var filteredData;
   const originalData = data;
   if (selectedBrand != null) {
     // lines with selected brand
@@ -364,10 +366,11 @@ function updateParallelSets(data) {
         return d.Brand == selectedBrand;
       });
     const linesData = lines._groups[0].map((d) => d.__data__);
-    const filteredData = getFilteredLines(linesData);
-    data = filteredData;
+    filteredData = getFilteredLines(linesData);
+  } else {
+    filteredData = getFilteredLines(data);
   }
-
+  data = filteredData;
 
   const svg = d3.select("#parallelSets").select("svg").select("g");
 
@@ -397,8 +400,6 @@ function updateParallelSets(data) {
     });
   });
 
-  //console.log("setsData: ", setsData);
-
   // Define the x and y positions for the rectangles
   const x = d3
     .scalePoint()
@@ -415,7 +416,6 @@ function updateParallelSets(data) {
     const y = {};
     const values = Object.keys(setsData[attribute]);
     const numValues = values.length;
-    //console.log("num: ", numValues, ", values: ", values);
 
     const rectWidth = 10;
 
@@ -426,7 +426,6 @@ function updateParallelSets(data) {
     attributeGroup = svg
     .append("g")
     .attr("transform", "translate(" + x(attribute) + ", 20)");
-    //console.log("attribue: ", attribute, " x: ", x(attribute));
 
     attributeGroup
       .selectAll(".attributeGroup")
@@ -436,10 +435,8 @@ function updateParallelSets(data) {
       .attr("class", "attributeGroup")
       .attr("x", 20)
       .attr("y", function (d, i) {
-        //console.log("d: ", d, ", i: ", i);
         if (i === 0) {
           y[d] = 0;
-          //console.log("y[d]: ", y[d]);
           return 0;
         }
         const prevHeight = d3.sum(
@@ -449,26 +446,30 @@ function updateParallelSets(data) {
           })
         );
         y[d] = prevHeight + i;
-        //console.log("y[d]: ", y[d]);
         return prevHeight + i;
       })
       .attr("width", rectWidth)
       .attr("height", function (value) {
-        //console.log("value: ", setsData[attribute][value]);
-        //console.log("height: ", (setsData[attribute][value] / totalCount) * maxHeight);
         return (setsData[attribute][value] / totalCount) * maxHeight;
       })
       .style("fill", "black")
       .style("opacity", 0.75)
-      .on("click", function (event, d) {
-        // UPDATE BAR CHART AND PARALLEL SETS, GET DATA FROM LINES WITH VALUE SELECTED
+      .on("click", function () {
         clickSetAttribute(d3.select(this)._groups[0][0].__data__, attribute);
         updateBarChart(originalData);
       })
-      .on("mouseover", function (event, d) {
-        showSetsTooltip(event, d);
+      .on("mouseover", function (event, item) {
+        sumCount = 0;
+        d3.selectAll(".linkAreaGroup")
+          .filter(function (d) {
+            if (d[attribute] == item) {sumCount += (d["Count"]);}
+          });
+        if (attribute == "BodyStyle" || attribute == "Segment") {
+          sumCount = sumCount / 2;
+        }
+        showSetsTooltip(event, item, sumCount);
       })
-      .on("mouseout", function (event, d) {
+      .on("mouseout", function () {
         hideTooltip();
       });
 
@@ -622,12 +623,8 @@ function resetHighlightedAttribute(attribute) {
   targetAttributes = new Set();
   targetValues = new Set();
   
-  const lines = d3.selectAll(".lines")
-    .filter(function (d) {
-      return d[attribute] != selectedValue;
-    });
+  const lines = d3.selectAll(".lines").filter(function (d) {return true});
   updateParallelCoordsLines(lines._groups[0].map((d) => d.__data__))
-  // call updateparallelcoords with only the lines with the value?
 }
 
 function highlightSetAttribute(attribute, value) {

@@ -158,7 +158,6 @@ function createBarChart(data) {
     .attr("stroke", "black")
     .attr("stroke-width", 0.5)
     .on("click", function (d) {
-      // GET LINES WITH OPACITY > 0.7
       updateHighlightedBrandClick(d.target.__data__);
       updateParallelSets(data);
     })
@@ -451,7 +450,7 @@ function createParallelCoordinates(data) {
   axisGroups.call(
     d3
       .drag()
-      .on("start", function (event, d) {
+      .on("start", function () {
         //Occulte the mean point
         d3.selectAll(".meanPointFiltered").attr("opacity", 0);
         d3.selectAll(".meanPoint").attr("opacity", 0);
@@ -464,11 +463,7 @@ function createParallelCoordinates(data) {
       })
       .on("drag", function (event, d) {
         const x = event.x;
-        const originalX = d3.select(this).attr("data-original-x");
         const draggedAxis = d;
-
-        // Update the position of the axis label
-        //d3.select(this).attr("transform", `translate(${x})`);
 
         // Find the nearest axis and swap positions
         const closestAxis = axisCombination.reduce(function (a, b) {
@@ -536,10 +531,7 @@ function createParallelCoordinates(data) {
             );
         }
       })
-      .on("end", function (event, d) {
-        //Ensure the final position of the attached point matches the axis label's position
-        const x = event.x; // Extract x-coordinate
-        const draggedAxis = d;
+      .on("end", function () {
 
         const filteredLines = d3.selectAll(".lines").filter(function (d) {
           return d3.select(this).style("opacity") == 0.7;
@@ -567,7 +559,7 @@ function createParallelCoordinates(data) {
   maxMarkerGroups.call(
     d3
       .drag()
-      .on("start", function (event, d) {
+      .on("start", function () {
         // Store the original position for reference
         d3.select(this).attr("data-original-y", d3.select(this).attr("y"));
       })
@@ -591,20 +583,19 @@ function createParallelCoordinates(data) {
 
         updateParallelCoordsLines(data);
       })
-      .on("end", function (event, d) {
-        // PROBABLY DO THIS FOR EVERY UPDATE, GET THE DATA FROM THE LINES WITH OPACITY > 0.7 (0.7 GREEN 1 ORANGE/BLUE)
+      .on("end", function () {
         lines = d3.selectAll(".lines").filter(function (d) {
-          return d3.select(this).style("opacity") == 0.7;
+          return d3.select(this).style("opacity") >= 0.7;
         })._groups[0];
-        updateBarChart(lines.map((d) => d.__data__));
-        updateParallelSets(lines.map((d) => d.__data__));
+        updateBarChart(data);
+        updateParallelSets(data);
       })
   );
 
   minMarkerGroups.call(
     d3
       .drag()
-      .on("start", function (event, d) {
+      .on("start", function () {
         // Store the original position for reference
         d3.select(this).attr("data-original-y", d3.select(this).attr("y"));
       })
@@ -629,12 +620,12 @@ function createParallelCoordinates(data) {
 
         updateParallelCoordsLines(data);
       })
-      .on("end", function (event, d) {
+      .on("end", function () {
         lines = d3.selectAll(".lines").filter(function (d) {
-          return d3.select(this).style("opacity") == 0.7;
+          return d3.select(this).style("opacity") >= 0.7;
         })._groups[0];
-        updateBarChart(lines.map((d) => d.__data__));
-        updateParallelSets(lines.map((d) => d.__data__));
+        updateBarChart(data);
+        updateParallelSets(data);
       })
   );
 }
@@ -728,17 +719,22 @@ function createParallelSets(data) {
       })
       .style("fill", "black")
       .style("opacity", 0.75)
-      .on("click", function (event, d) {
-        // UPDATE BAR CHART AND PARALLEL SETS, GET DATA FROM LINES WITH VALUE SELECTED
+      .on("click", function () {
         clickSetAttribute(d3.select(this)._groups[0][0].__data__, attribute);
         updateBarChart(data);
       })
-      .on("mouseover", function (event, d) {
-        //highlightSetAttribute();
-        showSetsTooltip(event, d);
+      .on("mouseover", function (event, item) {
+        sumCount = 0;
+        d3.selectAll(".linkAreaGroup")
+          .filter(function (d) {
+            if (d[attribute] == item) {sumCount += (d["Count"]);}
+          });
+        if (attribute == "BodyStyle" || attribute == "Segment") {
+          sumCount = sumCount / 2;
+        }
+        showSetsTooltip(event, item, sumCount);
       })
-      .on("mouseout", function (event, d) {
-        //resetSetAttribute();
+      .on("mouseout", function () {
         hideTooltip();
       });
 
@@ -793,15 +789,6 @@ function createParallelSets(data) {
     groupedData.push(attributeData);
   });
 
-  const multipleColors = ["#669900", "#99cc33", "#ccee66", "#006699", "#3399cc", "#990066", "#cc3399", "#ff6600", "#ff9900", "#ffcc00"];
-  const linkColorScale = d3.scaleOrdinal().range(multipleColors);
-  
-  const lineGenerator = 
-    d3.line()
-      .x(function(d) { return d.x; })
-      .y(function(d) { return d.y; })
-      .curve(d3.curveBasis);
-
   groupedData.forEach(function (d, i) {
     // get the values of starting y of each attribute rect
     var ySource = { ... ys[i] };
@@ -822,9 +809,7 @@ function createParallelSets(data) {
       const maxHeightSource = height * 3 - (numValuesSource - 1);
 
       // Target
-      const valuesTarget = Object.keys(setsData[source]);
       const totalCountTarget = setsData[target][d[j][target]];
-      const numValuesTarget = valuesSource.length;
       const maxHeightTarget = height * 3 - (numValuesSource - 1);
 
       const sourceHeight =
@@ -850,10 +835,6 @@ function createParallelSets(data) {
       ySource[d[j][source]] += paintSource;
       yTarget[d[j][target]] += paintTarget;
 
-      const linkColor = linkColorScale(i);
-
-      const saturation = count / (totalCountSource + totalCountTarget);
-
       // Create a group for each attribute
       const LinkAreaGroup = svg
         .append("g");
@@ -864,17 +845,8 @@ function createParallelSets(data) {
         .data([d[j]])
         .attr("class", "linkAreaGroup")
         .attr("points", polygonVertices.map((d) => `${d.x},${d.y}`).join(" "))
-        .attr("fill", "green")//d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
-        .attr("stroke", "black")//d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }))
-        .on("click", function(event, d) {
-          //clickSetValue();
-        })
-        .on("mouseover", function (event, d) {
-          //highlightSetValue();
-        })
-        .on("mouseout", function(event, d) {
-          //resetSetValue();
-        });
+        .attr("fill", "green")
+        .attr("stroke", "black");
       }
 
   });
