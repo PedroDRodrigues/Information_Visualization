@@ -66,7 +66,7 @@ function showBarTooltip(event, item) {
 
 function showSetsTooltip(event, item, count) {
   const yValue = document.getElementById("yValue");
-  yValue.textContent = item + ", Item Count: "+ count;
+  yValue.textContent = item + ": "+ count;
   tooltip.style.left = (event.pageX + 7.5) + "px";
   tooltip.style.top = (event.pageY - 10) + "px";
   tooltip.style.display = "block";

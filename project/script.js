@@ -41,9 +41,10 @@ const measuresLabels = {
 
 const axisCombinationSets = [
   "RapidCharge",
+  "PowerTrain",
   "BodyStyle",
   "Segment",
-  "PowerTrain",
+  
 ];
 
 const spaceBetweenAxes = width / 6;
@@ -271,7 +272,7 @@ function createParallelCoordinates(data) {
     .append("circle")
     .attr("class", "blackpoint")
     .attr("cx", 50)
-    .attr("cy", 10)
+    .attr("cy", -80)
     .attr("r", 3)
     .attr("fill", "black")
     .attr("transform", `translate(${width - 2}, 85)`);
@@ -279,18 +280,18 @@ function createParallelCoordinates(data) {
   svg
     .append("text")
     .attr("class", "total-percentage-label")
-    .attr("x", 100)
-    .attr("y", 50)
+    .attr("x", -98 )
+    .attr("y", -46)
     .attr("text-anchor", "middle")
     .attr("font-size", "11px")
     .text(": total mean value")
-    .attr("transform", `translate(${width}, 150) rotate(-90)`);
-
+    .attr("transform", `translate(${width}, 150) rotate(90)`);
+    
   svg
     .append("circle")
     .attr("class", "blackpoint")
     .attr("cx", 50)
-    .attr("cy", 10)
+    .attr("cy", -100)
     .attr("r", 3)
     .attr("fill", colorScale(6))
     .attr("stroke", "black")
@@ -299,12 +300,12 @@ function createParallelCoordinates(data) {
   svg
     .append("text")
     .attr("class", "total-percentage-label")
-    .attr("x", 100)
-    .attr("y", 50)
+    .attr("x", 45)
+    .attr("y", -46)
     .attr("text-anchor", "middle")
     .attr("font-size", "11px")
     .text(": filtered mean value")
-    .attr("transform", `translate(${width}, 300) rotate(-90)`);
+    .attr("transform", `translate(${width}, 150) rotate(90)`);
 
   // Calculate the max values of each attribute
   const maxValues = {};
@@ -643,9 +644,9 @@ function createParallelSets(data) {
   const nominalAttributes = data.map(function (d) {
     return {
       RapidCharge: d.RapidCharge,
+      PowerTrain: d.PowerTrain,
       BodyStyle: d.BodyStyle,
       Segment: d.Segment,
-      PowerTrain: d.PowerTrain,
     };
   });
 
@@ -667,7 +668,6 @@ function createParallelSets(data) {
   });
  
   // Define the x and y positions for the rectangles
-
   const x = d3
     .scalePoint()
     .range([0, width])
@@ -729,7 +729,7 @@ function createParallelSets(data) {
           .filter(function (d) {
             if (d[attribute] == item) {sumCount += (d["Count"]);}
           });
-        if (attribute == "BodyStyle" || attribute == "Segment") {
+        if (attribute == "BodyStyle" || attribute == "PowerTrain") {
           sumCount = sumCount / 2;
         }
         showSetsTooltip(event, item, sumCount);
@@ -754,7 +754,7 @@ function createParallelSets(data) {
 
   // Iterate through the attributes
   Object.keys(setsData).forEach(function (attribute, index, attributes) {
-    if (attribute == "PowerTrain") {
+    if (attribute == "Segment") {
       return;
     }
     const values = Object.keys(setsData[attribute]);

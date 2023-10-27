@@ -326,7 +326,7 @@ function updateParallelCoordsLines(data) {
       }
       return false;
     })
-    .attr("opacity", 0.20);
+    .attr("opacity", 0.13);
 
   svg
     .selectAll(".lines")
@@ -384,9 +384,10 @@ function updateParallelSets(data) {
   const nominalAttributes = data.map(function (d) {
     return {
       RapidCharge: d.RapidCharge,
+      PowerTrain: d.PowerTrain,
       BodyStyle: d.BodyStyle,
       Segment: d.Segment,
-      PowerTrain: d.PowerTrain,
+
     };
   });
 
@@ -471,7 +472,7 @@ function updateParallelSets(data) {
           .filter(function (d) {
             if (d[attribute] == item) {sumCount += (d["Count"]);}
           });
-        if (attribute == "BodyStyle" || attribute == "Segment") {
+        if (attribute == "BodyStyle" || attribute == "PowerTrain") {
           sumCount = sumCount / 2;
         }
         showSetsTooltip(event, item, sumCount);
@@ -487,7 +488,7 @@ function updateParallelSets(data) {
 
   // Iterate through the attributes
   Object.keys(setsData).forEach(function (attribute, index, attributes) {
-    if (attribute == "PowerTrain") {
+    if (attribute == "Segment") {
       return;
     }
     const values = Object.keys(setsData[attribute]);
@@ -680,7 +681,7 @@ function highlightSetAttribute(attribute, value) {
     .filter(function (d) {
       return d[attribute] != value;
     })
-    .attr("opacity", 0.2);
+    .attr("opacity", 0.13);
 }
 
 function clickSetAttribute(value, attribute) {
