@@ -156,12 +156,20 @@ function getFilteredLines(data) {
 function updateBarChart(data) {
   var filteredData;
   if (selectedValue != null) {
-    // lines with alluvial filter and within coords ranges
-    const lines = d3.selectAll(".lines")
+    if (selectedBrand != null) {
+      const lines = d3.selectAll(".lines")
+      .filter(function (d) {
+        return d[selectedAttribute] == selectedValue && d["Brand"] == selectedBrand && d3.select(this).attr("opacity") >= 0.7;
+      });
+      filteredData = lines._groups[0].map((d) => d.__data__);
+    } else {
+      // lines with alluvial filter and within coords ranges
+      const lines = d3.selectAll(".lines")
       .filter(function (d) {
         return d[selectedAttribute] == selectedValue && d3.select(this).attr("opacity") >= 0.7;
       });
-    filteredData = lines._groups[0].map((d) => d.__data__);
+      filteredData = lines._groups[0].map((d) => d.__data__);
+    }
   } else {
     filteredData = getFilteredLines(data);
   }
@@ -362,10 +370,10 @@ function updateParallelSets(data) {
     // lines with selected brand
     const lines = d3.selectAll(".lines")
       .filter(function (d) {
-        return d.Brand == selectedBrand;
+        return d.Brand == selectedBrand && d3.select(this).attr("opacity") >= 0.7;
       });
-    const linesData = lines._groups[0].map((d) => d.__data__);
-    filteredData = getFilteredLines(linesData);
+    filteredData = lines._groups[0].map((d) => d.__data__);
+    //filteredData = getFilteredLines(linesData);
   } else {
     filteredData = getFilteredLines(data);
   }
