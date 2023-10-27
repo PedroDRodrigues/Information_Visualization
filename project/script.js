@@ -268,6 +268,45 @@ function createParallelCoordinates(data) {
 
   const filteredMeanValues = meanValues;
 
+  svg
+    .append("circle")
+    .attr("class", "blackpoint")
+    .attr("cx", 50)
+    .attr("cy", 10)
+    .attr("r", 3)
+    .attr("fill", "black")
+    .attr("transform", `translate(${width - 2}, 85)`);
+
+  svg
+    .append("text")
+    .attr("class", "total-percentage-label")
+    .attr("x", 100)
+    .attr("y", 50)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "11px")
+    .text(": total mean value")
+    .attr("transform", `translate(${width}, 150) rotate(-90)`);
+
+  svg
+    .append("circle")
+    .attr("class", "blackpoint")
+    .attr("cx", 50)
+    .attr("cy", 10)
+    .attr("r", 3)
+    .attr("fill", colorScale(6))
+    .attr("stroke", "black")
+    .attr("transform", `translate(${width - 2}, 240)`);
+
+  svg
+    .append("text")
+    .attr("class", "total-percentage-label")
+    .attr("x", 100)
+    .attr("y", 50)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "11px")
+    .text(": filtered mean value")
+    .attr("transform", `translate(${width}, 300) rotate(-90)`);
+
   // Calculate the max values of each attribute
   const maxValues = {};
   axisCombination.forEach((attr) => {
