@@ -1,5 +1,7 @@
+// bar chart filters
 var selectedBrand = null;
 
+// alluvial filters
 var selectedValue = null;
 var targetAttributes = new Set();
 var targetValues = new Set();
@@ -18,18 +20,15 @@ function resetHighlightedBrand() {
     .attr("stroke-width", 0.5);
   
   // reset stroke collor
-  d3.selectAll(".lines")
+  const lines = d3.selectAll(".lines")
     .filter(function (d) {
       return d.Brand == selectedBrand;
     })
     .attr("stroke", colorScale(5));
   
+  filteredLines = getFilteredLines(lines);
   // reset opacity (different filter)
-  d3.selectAll(".lines")
-    .filter(function (d) {
-      return d.Brand == selectedBrand && d3.select(this).style("opacity") >= 0.7;
-    })
-    .attr("opacity", 0.7);
+  filteredLines.attr("opacity", 0.7);
 }
 
 function updateHighlightedBrandClick(clickedBar) {
@@ -52,17 +51,15 @@ function updateHighlightedBrandClick(clickedBar) {
       .attr("stroke", selectedColor)
       .attr("stroke-width", 2.5);
 
-    d3.selectAll(".lines")
+    const lines = d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
       .attr("stroke", selectedColor);
-    
-    d3.selectAll(".lines")
-      .filter(function (d) {
-        return d.Brand == brand && d3.select(this).style("opacity") >= 0.7;
-      })
-      .attr("opacity", 1);
+  
+    // reset opacity (different filter)
+    filteredLines = getFilteredLines(lines);
+    filteredLines.attr("opacity", 1);
   }
 }
 
@@ -76,17 +73,15 @@ function updateHighlightedBrandMouseOver(hoveredBar) {
       .attr("stroke", hoveredColor)
       .attr("stroke-width", 2.5);
 
-    d3.selectAll(".lines")
+    const lines = d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
       .attr("stroke", hoveredColor);
-
-    d3.selectAll(".lines")
-      .filter(function (d) {
-        return d.Brand == brand && d3.select(this).style("opacity") >= 0.7;
-      })
-      .attr("opacity", 1);
+    
+    // reset opacity (different filter)
+    filteredLines = getFilteredLines(lines);
+    filteredLines.attr("opacity", 1);
   }
 }
 
@@ -100,21 +95,79 @@ function updateHighlightedBrandMouseOut(hoveredBar) {
       .attr("stroke", "black")
       .attr("stroke-width", 0.5);
 
-    d3.selectAll(".lines")
+    const lines = d3.selectAll(".lines")
       .filter(function (d) {
         return d.Brand == brand;
       })
       .attr("stroke", colorScale(5));
-
-    d3.selectAll(".lines")
-      .filter(function (d) {
-        return d.Brand == selectedBrand && d3.select(this).style("opacity") >= 0.7;
-      })
-      .attr("opacity", 0.7);
+    
+    // reset opacity (different filter)
+    filteredLines = getFilteredLines(lines);
+    filteredLines.attr("opacity", 1);
   }
 }
 
+// give array of data, return data that's within the markers range
+function getFilteredLines(data) {
+  
+  const yScale = {};
+  axisCombination.forEach((attr) => {
+    yScale[attr] = d3
+      .scaleLinear()
+      .domain(d3.extent(data, (d) => +d[attr]))
+      .range([height * 3, 0]);
+  });
+
+  yMaxValues = {};
+  maxMarkerGroups = d3.selectAll(".maxValueMarkers");
+  maxMarkerGroups.each(function (axis) {
+    if (d3.select(this).attr("y") == null) {
+      yMaxValues[axis] = 0;
+    } else {
+      yMaxValues[axis] = parseInt(d3.select(this).attr("y"));
+    }
+  });
+
+  yMinValues = {};
+  minMarkerGroups = d3.selectAll(".minValueMarkers");
+  minMarkerGroups.each(function (axis) {
+    if (d3.select(this).attr("y") == null) {
+      yMinValues[axis] = height * 3;
+    } else {
+      yMinValues[axis] = parseInt(d3.select(this).attr("y"));
+    }
+  });
+
+  var currY;
+  const filteredLines = data.filter(function (a) {
+      for (let i = 0; i < axisCombination.length; i++) {
+        const axis = axisCombination[i];
+        currY = yScale[axis](a[axis]);
+        if (currY <= yMinValues[axis] && currY >= yMaxValues[axis]) {
+        } else {
+          return false;
+        }
+      }
+      return true;
+    });
+  return filteredLines;
+}
+
 function updateBarChart(data) {
+  var originalData = data;
+  if (selectedValue != null) {
+    // lines with alluvial filter
+    const lines = d3.selectAll(".lines")
+      .filter(function (d) {
+        return d[selectedAttribute] == selectedValue;
+      });
+    const linesData = lines._groups[0].map((d) => d.__data__);
+    const filteredData = getFilteredLines(linesData);
+    data = filteredData;
+  } else {
+  }
+
+
   // Select the SVG element of the bar chart
   const currentModels = data.length;
   const svg = d3.select("#barChart").select("svg").select("g");
@@ -208,6 +261,7 @@ function updateBarChart(data) {
     .selectAll(".bar")
     .on("click", function (d) {
       updateHighlightedBrandClick(d.target.__data__);
+      updateParallelSets(data);
     })
     .on("mouseover", function (event, d) {
       showBarTooltip(event, d);
@@ -302,6 +356,19 @@ function updateParallelCoordsLines(data) {
 }
 
 function updateParallelSets(data) {
+  const originalData = data;
+  if (selectedBrand != null) {
+    // lines with selected brand
+    const lines = d3.selectAll(".lines")
+      .filter(function (d) {
+        return d.Brand == selectedBrand;
+      });
+    const linesData = lines._groups[0].map((d) => d.__data__);
+    const filteredData = getFilteredLines(linesData);
+    data = filteredData;
+  }
+
+
   const svg = d3.select("#parallelSets").select("svg").select("g");
 
   const nominalAttributes = data.map(function (d) {
@@ -330,7 +397,7 @@ function updateParallelSets(data) {
     });
   });
 
-  console.log("setsData: ", setsData);
+  //console.log("setsData: ", setsData);
 
   // Define the x and y positions for the rectangles
   const x = d3
@@ -348,7 +415,7 @@ function updateParallelSets(data) {
     const y = {};
     const values = Object.keys(setsData[attribute]);
     const numValues = values.length;
-    console.log("num: ", numValues, ", values: ", values);
+    //console.log("num: ", numValues, ", values: ", values);
 
     const rectWidth = 10;
 
@@ -369,10 +436,10 @@ function updateParallelSets(data) {
       .attr("class", "attributeGroup")
       .attr("x", 20)
       .attr("y", function (d, i) {
-        console.log("d: ", d, ", i: ", i);
+        //console.log("d: ", d, ", i: ", i);
         if (i === 0) {
           y[d] = 0;
-          console.log("y[d]: ", y[d]);
+          //console.log("y[d]: ", y[d]);
           return 0;
         }
         const prevHeight = d3.sum(
@@ -382,17 +449,22 @@ function updateParallelSets(data) {
           })
         );
         y[d] = prevHeight + i;
-        console.log("y[d]: ", y[d]);
+        //console.log("y[d]: ", y[d]);
         return prevHeight + i;
       })
       .attr("width", rectWidth)
       .attr("height", function (value) {
-        console.log("value: ", setsData[attribute][value]);
-        console.log("height: ", (setsData[attribute][value] / totalCount) * maxHeight);
+        //console.log("value: ", setsData[attribute][value]);
+        //console.log("height: ", (setsData[attribute][value] / totalCount) * maxHeight);
         return (setsData[attribute][value] / totalCount) * maxHeight;
       })
       .style("fill", "black")
       .style("opacity", 0.75)
+      .on("click", function (event, d) {
+        // UPDATE BAR CHART AND PARALLEL SETS, GET DATA FROM LINES WITH VALUE SELECTED
+        clickSetAttribute(d3.select(this)._groups[0][0].__data__, attribute);
+        updateBarChart(originalData);
+      })
       .on("mouseover", function (event, d) {
         showSetsTooltip(event, d);
       })
@@ -442,7 +514,7 @@ function updateParallelSets(data) {
     groupedData.push(attributeData);
   });
 
-  console.log("groupedDaata: ", groupedData);
+  //console.log("groupedDaata: ", groupedData);
 
   const multipleColors = ["#669900", "#99cc33", "#ccee66", "#006699", "#3399cc", "#990066", "#cc3399", "#ff6600", "#ff9900", "#ffcc00"];
   const linkColorScale = d3.scaleOrdinal().range(multipleColors);
@@ -509,7 +581,7 @@ function updateParallelSets(data) {
       LinkAreaGroup = svg
         .append("g")
         //.attr("transform", "translate(${x(source) - 150}, 5)")
-        .attr("class", "linkAreaGroup");
+        //.attr("class", "linkAreaGroup");
 
       // Create a set of Plygnons to link each source to target
       LinkAreaGroup
@@ -520,53 +592,20 @@ function updateParallelSets(data) {
         .attr("fill", "green")//d3.color(linkColor).brighter(saturation).copy({ opacity: 0.5 }))
         .attr("stroke", "black")//d3.color(linkColor).darker(saturation).copy({ opacity: 0.5 }))
         .on("mouseover", function (event, d) {
-          console.log(d3.select(this)._groups[0][0].__data__)
+          //console.log(d3.select(this)._groups[0][0].__data__)
           //showSetsTooltip();
         });
       } 
-
     });
-
-}
-/*
-function highlightedSet(clickedSet) {
-  var set = clickedSet;
-  var sourceAttribute = Object.keys(clickedSet)[0];
-  var sourceValue = clickedSet[sourceAttribute];
-  var targetAttribute = Object.keys(clickedSet)[1];
-  var targetValue = clickedSet[targetAttribute];
-
-  // de-select set
-  if (selectedSet == set) {
-    selectedSet = null;
-    console.log("de-select", set)
-
-    d3.selectAll(".linkAreaGroup")
-      .filter(function (d) {
-        return d[sourceAttribute] == sourceValue && d[targetAttribute] == targetValue;
-      })
-      .attr("fill", "green")
-      .attr("stroke-width", 1);
-
-  } else {
-    // select new brand
-    if (selectedSet != null) {
-      //const bar = d3.selectAll(".bar").filter(function (d) { return d.Brand == selectedBrand; })._groups[0][0];
-      //if (bar != undefined) { resetHighlightedBrand(bar.__data__); }
-    }
-    selectedSet = set;
-    console.log("new", selectedSet)
-
-    d3.selectAll(".linkAreaGroup")
-      .filter(function (d) {
-        //return d[sourceAttribute] == sourceValue && d[targetAttribute] == targetValue;
-      })
-      .attr("fill", "black")
-      .attr("stroke-width", 2.5);
-
+  if (selectedValue != null) {
+    //resetHighlightedAttribute(selectedAttribute);
+    //resetHighlightedAttribute(selectedAttribute);
+    targetAttributes = new Set();
+    targetValues = new Set();
+    highlightSetAttribute(selectedValue, selectedAttribute);
   }
 }
-*/
+
 function resetHighlightedAttribute(attribute) {
   d3.selectAll(".linkAreaGroup")
     .filter(function (d) {
@@ -582,6 +621,13 @@ function resetHighlightedAttribute(attribute) {
   
   targetAttributes = new Set();
   targetValues = new Set();
+  
+  const lines = d3.selectAll(".lines")
+    .filter(function (d) {
+      return d[attribute] != selectedValue;
+    });
+  updateParallelCoordsLines(lines._groups[0].map((d) => d.__data__))
+  // call updateparallelcoords with only the lines with the value?
 }
 
 function highlightSetAttribute(attribute, value) {
@@ -625,19 +671,25 @@ function highlightSetAttribute(attribute, value) {
       return d[attribute] != value;
     })
     .attr("opacity", 0.25);
+
+  const lines = d3.selectAll(".lines")
+    .filter(function (d) {
+      return d[attribute] != value;
+    })
+    .attr("opacity", 0.2);
 }
 
-function clickSetAttribute(set, attribute) {
-  const value = set.__data__;
+function clickSetAttribute(value, attribute) {
   if (selectedValue == value) {
     resetHighlightedAttribute(attribute);
     selectedValue = null;
+    selectedAttribute = null;
   } else {
     if (selectedValue != null) {
-      // test this
       resetHighlightedAttribute(attribute);
     }
     selectedValue = value;
+    selectedAttribute = attribute;
     highlightSetAttribute(attribute, value);
   }
 }

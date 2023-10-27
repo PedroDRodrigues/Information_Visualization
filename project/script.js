@@ -158,9 +158,9 @@ function createBarChart(data) {
     .attr("stroke", "black")
     .attr("stroke-width", 0.5)
     .on("click", function (d) {
-      console.log(d.target.__data__.Brand)
       // GET LINES WITH OPACITY > 0.7
       updateHighlightedBrandClick(d.target.__data__);
+      updateParallelSets(data);
     })
     .on("mouseover", function (event, d) {
       showBarTooltip(event, d);
@@ -241,9 +241,9 @@ function createParallelCoordinates(data) {
     .select("#parallelCoords")
     .append("svg")
     .attr("width", width + margin.left + margin.right + 50)
-    .attr("height", height * 3 + margin.top + margin.bottom + 50)
+    .attr("height", height * 3 + margin.top + margin.bottom)
     .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top + 30})`);
+    .attr("transform", `translate(${margin.left},${margin.top + 5})`);
 
   // For each dimension, build a linear scale.
   const xScale = d3
@@ -307,7 +307,12 @@ function createParallelCoordinates(data) {
     .attr("class", "axisGroup")
     .attr("transform", function (d) {
       return "translate(" + xScale(d) + ")";
-    });
+    })
+    .attr("stroke-width", 2)
+    .on("mouseover", function (event, item) {
+      return showTooltip(event, item, yScale);
+    })
+    .on("mouseout", hideTooltip);
 
   // Axis Labels
   axisGroups
@@ -316,11 +321,7 @@ function createParallelCoordinates(data) {
       const minMaxValues = [yScale[d].domain()[0], yScale[d].domain()[1]];
       axis.tickValues(minMaxValues);
       d3.select(this).call(axis);
-    })
-    .on("mouseover", function (event, item) {
-      return showTooltip(event, item, yScale);
-    })
-    .on("mouseout", hideTooltip);
+    });
 
   axisGroups
     .append("text")
@@ -690,7 +691,8 @@ function createParallelSets(data) {
       .style("opacity", 0.75)
       .on("click", function (event, d) {
         // UPDATE BAR CHART AND PARALLEL SETS, GET DATA FROM LINES WITH VALUE SELECTED
-        clickSetAttribute(d3.select(this)._groups[0][0], attribute);
+        clickSetAttribute(d3.select(this)._groups[0][0].__data__, attribute);
+        updateBarChart(data);
       })
       .on("mouseover", function (event, d) {
         //highlightSetAttribute();
