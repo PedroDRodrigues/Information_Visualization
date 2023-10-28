@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>EV VEHICLES</title>
+    <!-- Styling for the dashboard -->
+    <style>
+      .dashboard {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+      }
+      .visualization {
+        padding: 20px;
+      }
+    </style>
+    <!-- Load the D3.js library for data visualization -->
+    <script src="https://d3js.org/d3.v7.js"></script>
+    <!-- Load JavaScript files for the dashboard --> 
+    <script src="script.js"></script>
+    <!--
+    <script src="create.js"></script>
+    <script src="update.js"></script>
+    <script src="linked.js"></script>
+    -->
+  </head>
+  <!-- Start the dashboard upon page load -->
+  <body onload="startDashboard()">
+    <!-- Buttons to update the data visualization -->
+    <!--
+    <div class="button-container">
+      <button onclick="updateIdioms('old')">Old Data</button>
+      <button onclick="updateIdioms('new')">New Data</button>
+      <button onclick="updateIdioms('all')">All Data</button>
+    </div>
+    -->
+    <!-- The main grid layout of the dashboard -->
+    <div class="dashboard">
+      <!-- Visualization area for the parallel coordinates plot -->
+      <div class="visualization" id="parallelCoords"></div>
+      <!-- Visualization area for the parallel sets plot -->
+      <div class="visualization" id="parallelSets"></div>
+      <!-- Visualization area for the bar chart -->
+      <div class="visualization" id="barChart"></div>
+    </div>
+  </body>
+</html>
