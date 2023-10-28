@@ -48,7 +48,6 @@ function startDashboard() {
     // Call functions to create the choropleth map and scatter plot
     createChoroplethMap();
     createScatterPlot();
-    createMirroredBeeswarmPlot();
   });
 }
 
@@ -104,14 +103,9 @@ function createChoroplethMap() {
     .attr("d", path)
     .attr("stroke", "black")
     .on("mouseover", handleMouseOver) // Function to handle mouseover event
-    .on("mouseout", handleMouseOut)   // Function to handle mouseout event  
-    .on("click", (event, d) => {
-      //console.log(d); // Print the data associated with the clicked element
-      toggleDrawerItem(d);
-    }) 
+    .on("mouseout", handleMouseOut)   // Function to handle mouseout event
     .append("title")
-    .text((d) => d.properties.name)
-
+    .text((d) => d.properties.name);
 
   // Set the fill color of each country based on its incomeperperson value
   currentData.forEach((element) => {
@@ -221,7 +215,7 @@ function createScatterPlot() {
       d3.max(currentData, (d) => d.alcconsumption),
     ])
     .range([height, 0]);
-
+  
   // Add circles to the scatter plot representing each country
   svg
     .selectAll(".circle")
@@ -235,13 +229,7 @@ function createScatterPlot() {
     .attr("fill", "steelblue")
     .attr("stroke", "black")
     .on("mouseover", handleMouseOver) // Function to handle mouseover event
-    .on("mouseover.second", (event, d) => showTooltip(event, d))
     .on("mouseout", handleMouseOut)   // Function to handle mouseout event
-    .on("mouseout.second", hideTooltip)
-    .on("click", (event, d) => {
-      //console.log(d); // Print the data associated with the clicked element
-      toggleDrawerItem(d);
-    }) 
     .append("title")
     .text((d) => d.country);
 
@@ -293,182 +281,4 @@ function createScatterPlot() {
     .style("text-anchor", "middle")
     .attr("transform", "rotate(-90)")
     .text("Alcohol Consumption");
-}
-
-function dodge (data, {radius, x}) {
-  const radius2 = radius ** 2;
-  const circles = data.map(d => ({x: x(d), data: d})).sort((a, b) => a.x - b.x);
-  const epsilon = 1;
-  let head = null, tail = null;
-
-  // Returns true if circle ⟨x,y⟩ intersects with any circle in the queue.
-  function intersects(x, y) {
-    let a = head;
-    while (a) {
-      if (radius2 - epsilon > (a.x - x) ** 2 + (a.y - y) ** 2) {
-        return true;
-      }
-      a = a.next;
-    }
-    return false;
-  }
-
-  // Place each circle sequentially.
-  for (const b of circles) {
-
-    // Remove circles from the queue that can’t intersect the new circle b.
-    while (head && head.x < b.x - radius2) head = head.next;
-
-    // Choose the minimum non-intersecting tangent.
-    if (intersects(b.x, b.y = 0)) {
-      let a = head;
-      b.y = Infinity;
-      do {
-        let y1 = a.y + Math.sqrt(radius2 - (a.x - b.x) ** 2);
-        let y2 = a.y - Math.sqrt(radius2 - (a.x - b.x) ** 2);
-        if (Math.abs(y1) < Math.abs(b.y) && !intersects(b.x, y1)) b.y = y1;
-        if (Math.abs(y2) < Math.abs(b.y) && !intersects(b.x, y2)) b.y = y2;
-        a = a.next;
-      } while (a);
-    }
-
-    // Add b to the queue.
-    b.next = null;
-    if (head === null) head = tail = b;
-    else {
-      tail = tail.next = b;
-    }
-  }
-
-  return circles;
-}
-
-// Function to create a mirrored beeswarm plot
-function createMirroredBeeswarmPlot() {
-  
-  // Filter the data to remove entries with missing incomeperperson or alcconsumption values
-  currentData = globalDataCapita.filter(function (d) {
-    return d.incomeperperson !== "" && !isNaN(d.incomeperperson) && d.alcconsumption !== "";
-  })
-
-  // Create an SVG element to hold the beeswarm plot
-  const svg = d3
-    .select("#beeswarm-plot")
-    .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .attr("style", "max-width: 100%; height: auto;")
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
-
-  // Create x, r and f scales for the beeswarm plot
-  const xScale = d3
-    .scaleLinear()
-    .domain([
-      d3.min(currentData, (d) => d.incomeperperson),
-      d3.max(currentData, (d) => d.incomeperperson),
-    ])
-    .range([0, width]);
-
-  const yScale = d3.scaleLinear()
-    .domain([0, d3.max(currentData, d => d.alcconsumption)])
-    .range([0, height]);
-
-  const rScale = d3.scaleLinear()
-    .domain([d3.min(currentData, (d) => d.alcconsumption), d3.max(currentData, (d) => d.alcconsumption)])
-    .range([0, 10]); 
-  
-  // Create a color scale for the incomeperperson values
-  const colorScale = d3
-    .scaleSequential()
-    .domain([
-      d3.min(currentData, (d) => d.lifeexpectancy),
-      d3.max(currentData, (d) => d.lifeexpectancy),
-    ])
-    .interpolator(d3.interpolateBlues);
-  
-  const padding = 20;
-
-  // Define the amount of jitter for the y-coordinates (adjust as needed)
-  const yJitterAmount = 100; // You can change this value as needed
-
-  // Define a random number generator function for y-jitter
-  const randomYJitter = () => Math.random() * yJitterAmount - yJitterAmount / 2;
-
-
-  // Create an empty index or mapping object
-  const circleIndex = {};
-  
-  // Define your circles using the dodge function and index them
-  const circles = dodge(currentData, { radius: (d) => rScale(d.alcconsumption), x: (d) => xScale(d.incomeperperson) }).map((circle, index) => {
-    circleIndex[index] = circle.data; // Associate each circle with its data point
-    return {
-      circle: circle,
-    };
-  });
-
-  // Filter circles based on your criteria (example: incomeperperson)
-  const filteredCircles = circles.filter((circle) => {
-    return circle.circle.data.incomeperperson !== "" && !isNaN(circle.circle.data.incomeperperson);
-  });
-
-  // Add circles to the mirrored beeswarm plot representing each country
-  svg
-    .selectAll(".circle")
-    .data(filteredCircles, (d) => (d.circle.data ? d.circle.data.country : null))
-    .enter()
-    .append("circle")
-    .attr("class", "bee data")
-    .attr("cx", (d) => xScale(d.circle.data.incomeperperson))
-    .attr("cy", (d, i) => {
-      let cy;
-      const yOffset = rScale(d.circle.data.alcconsumption) * 0.1;
-      if (isNaN(d.circle.data.alcconsumption)) {
-        // Calculate the y-position for circles without 'alcconsumption' data
-        cy = i % 2 === 0 ? height / 2 + padding - yOffset + randomYJitter() : height / 2 - padding - yOffset + randomYJitter();
-      } else {
-        // Calculate the y-position for circles with 'alcconsumption' data
-        cy = height / 2 - yOffset + randomYJitter();
-        cy += (i % 2 === 0 ? - padding : padding);
-      }
-      return cy;
-    })    
-    .attr("r", (d) => rScale(d.circle.data.alcconsumption))
-    .attr("fill", (d) => colorScale(d.circle.data.lifeexpectancy))
-    .attr("stroke", "black") 
-    .on("mouseover", handleMouseOver) // Function to handle mouseover event
-    .on("mouseout", handleMouseOut)   // Function to handle mouseout event
-    .append("title")
-    .text((d) => d.circle.data && d.circle.data.country);
-
-
-  // Create tick marks and labels for the x and y axes
-  var xTicks = [];
-  var yTicks = [];
-  for (let index = 0; index <= 1; index += 0.25) {
-    xTicks.push(Math.round(xScale.invert(index * width)));
-    yTicks.push(Math.round(yScale.invert(index * height)));
-  }
-
-  svg
-    .append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0,${height})`)
-    .call(
-      d3
-        .axisBottom(xScale)
-        .tickFormat((d) => d)
-        .tickValues(xTicks)
-        .tickSizeOuter(0)
-    );
-
-  // Add labels for the x and y axes
-  svg
-    .append("text")
-    .attr("class", "x-axis-label")
-    .attr("x", width / 2)
-    .attr("y", height + margin.top + 20)
-    .style("text-anchor", "middle")
-    .text("Income per person");
-
 }
